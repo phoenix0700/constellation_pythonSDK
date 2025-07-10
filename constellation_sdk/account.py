@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
+
 from .exceptions import ConstellationError
 
 
@@ -65,7 +66,7 @@ class Account:
                 int.from_bytes(key_bytes, "big"), ec.SECP256K1()
             )
         except Exception as e:
-            raise ConstellationError(f"Invalid private key: {e}")
+            raise ConstellationError(f"Invalid private key: {e}") from e
 
     def _derive_address(self) -> str:
         """Derive DAG address from public key."""

@@ -310,7 +310,7 @@ class ConfigManager:
             raise ConfigurationError(f"Configuration file not found: {file_path}")
 
         try:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             config = SDKConfig.from_dict(data)
@@ -327,7 +327,7 @@ class ConfigManager:
         path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 json.dump(self._config.to_dict(), f, indent=2)
         except Exception as e:
             raise ConfigurationError(f"Error saving configuration: {e}")

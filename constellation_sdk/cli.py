@@ -17,10 +17,9 @@ Usage:
 
 import asyncio
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 try:
     import click
@@ -29,13 +28,19 @@ except ImportError:
     print("Install it with: pip install click")
     sys.exit(1)
 
-from . import (ASYNC_AVAILABLE, Account, ConstellationError, MetagraphClient,
-               Network, NetworkError, Transactions, ValidationError,
-               create_custom_config, discover_production_metagraphs,
-               get_config, set_config)
+from .account import Account
+from .exceptions import ConstellationError, NetworkError, ValidationError
+from .metagraph import MetagraphClient
+from .network import Network
+from .validation import AddressValidator
 
-if ASYNC_AVAILABLE:
-    from . import AsyncNetwork, discover_metagraphs_async
+try:
+    from .async_metagraph import discover_metagraphs_async
+    from .metagraph import discover_production_metagraphs
+
+    ASYNC_AVAILABLE = True
+except ImportError:
+    ASYNC_AVAILABLE = False
 
 
 # CLI Configuration
@@ -54,7 +59,7 @@ class CLIConfig:
         """Load CLI configuration from file."""
         if self.config_file.exists():
             try:
-                with open(self.config_file, "r") as f:
+                with open(self.config_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception:
                 pass
@@ -69,7 +74,7 @@ class CLIConfig:
     def save_config(self):
         """Save CLI configuration to file."""
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.config_file, "w") as f:
+        with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(self.config, f, indent=2)
 
     def get(self, key: str, default=None):
@@ -169,12 +174,7 @@ def cli(ctx, network, output, verbose):
     try:
         from .config import DEFAULT_CONFIGS
 
-        if ctx.obj["network"] in DEFAULT_CONFIGS:
-            network_config = DEFAULT_CONFIGS[ctx.obj["network"]]
-            sdk_config = get_config()
-            sdk_config.network = network_config
-            set_config(sdk_config)
-        else:
+        if ctx.obj["network"] not in DEFAULT_CONFIGS:
             click.echo(f"❌ Unknown network: {ctx.obj['network']}", err=True)
             sys.exit(1)
     except Exception as e:
@@ -229,10 +229,10 @@ def account_info(ctx, address):
             )
             sys.exit(1)
 
-        acc = Account(private_key=bytes.fromhex(private_key))
+        acc = Account(private_key)
         address = acc.address
 
-    network = Network()
+    network = Network(ctx.obj["network"])
 
     try:
         balance_info = network.get_balance(address)
@@ -257,7 +257,7 @@ def account_info(ctx, address):
 @handle_errors
 def get_balance(ctx, address, watch):
     """Get DAG balance for an address."""
-    network = Network()
+    network = Network(ctx.obj["network"])
 
     def fetch_balance():
         balance_info = network.get_balance(address)
@@ -275,7 +275,11 @@ def get_balance(ctx, address, watch):
             while True:
                 output = fetch_balance()
                 click.clear()
-                click.echo(f"🔄 Last updated: {click.DateTime().now()}")
+                from datetime import datetime
+
+                click.echo(
+                    f"🔄 Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                )
                 click.echo(format_output(output, ctx.obj["output_format"]))
                 click.echo("\nPress Ctrl+C to stop watching...")
 
@@ -310,11 +314,10 @@ def send_transaction(ctx, amount, to_address, from_key, fee, dry_run):
         sys.exit(1)
 
     # Create account
-    acc = Account(private_key=bytes.fromhex(private_key_hex))
+    acc = Account(private_key_hex)
 
-    # Create transaction
-    transactions = Transactions()
-    network = Network()
+    # Create network client
+    network = Network(ctx.obj["network"])
 
     # Get current balance and ordinal
     balance_info = network.get_balance(acc.address)
@@ -328,13 +331,14 @@ def send_transaction(ctx, amount, to_address, from_key, fee, dry_run):
         sys.exit(1)
 
     # Create transaction
-    tx_data = transactions.create_dag_transaction(
-        account=acc,
-        to_address=to_address,
+    from constellation_sdk.transactions import create_dag_transaction
+
+    tx_data = create_dag_transaction(
+        sender=acc,
+        destination=to_address,
         amount=amount,
         fee=fee,
-        last_ref_hash=balance_info.get("lastTransactionRef", {}).get("hash", ""),
-        last_ref_ordinal=balance_info.get("ordinal", 0),
+        parent=balance_info.get("lastTransactionRef", {}).get("hash", ""),
     )
 
     if dry_run:
@@ -371,11 +375,11 @@ def network():
 @handle_errors
 def network_info(ctx):
     """Get network information."""
-    net = Network()
+    net = Network(ctx.obj["network"])
 
     try:
         node_info = net.get_node_info()
-        latest_snapshot = net.get_latest_snapshot()
+        cluster_info = net.get_cluster_info()
 
         output = {
             "network": ctx.obj["network"],
@@ -384,10 +388,9 @@ def network_info(ctx):
                 "version": node_info.get("version", "N/A"),
                 "state": node_info.get("state", "N/A"),
             },
-            "latest_snapshot": {
-                "ordinal": latest_snapshot.get("ordinal", "N/A"),
-                "hash": latest_snapshot.get("hash", "N/A"),
-                "timestamp": latest_snapshot.get("timestamp", "N/A"),
+            "cluster_info": {
+                "node_count": len(cluster_info) if cluster_info else 0,
+                "nodes": cluster_info[:3] if cluster_info else [],  # Show first 3 nodes
             },
         }
 
@@ -401,7 +404,7 @@ def network_info(ctx):
 @handle_errors
 def network_health(ctx):
     """Check network health."""
-    net = Network()
+    net = Network(ctx.obj["network"])
 
     try:
         # Try to get node info
@@ -442,8 +445,8 @@ def discover_metagraphs(ctx, production, use_async):
         if production:
             return discover_production_metagraphs()
         else:
-            client = MetagraphClient()
-            return client.discover_all_metagraphs()
+            client = MetagraphClient(ctx.obj["network"])
+            return client.discover_metagraphs()
 
     async def async_discover():
         if ASYNC_AVAILABLE and use_async:
@@ -516,17 +519,18 @@ def set_config_value(key, value):
 @click.confirmation_option(prompt="Reset all CLI configuration?")
 def reset_config():
     """Reset CLI configuration to defaults."""
+    global cli_config
     if cli_config.config_file.exists():
         cli_config.config_file.unlink()
 
-    cli_config.__init__()  # Reinitialize with defaults
+    cli_config = CLIConfig()  # Reinitialize with defaults
     click.echo("✅ CLI configuration reset to defaults")
 
 
 # Main entry point
 def main():
     """Main CLI entry point."""
-    cli()
+    cli(obj={})
 
 
 if __name__ == "__main__":

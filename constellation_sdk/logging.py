@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Union
 
-from .exceptions import ConstellationError, format_error_for_logging
+from .exceptions import format_error_for_logging
 
 # =====================
 # Logger Configuration

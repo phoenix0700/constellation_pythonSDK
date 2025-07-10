@@ -49,7 +49,7 @@ class Network:
             response = requests.request(method, url, timeout=30, **kwargs)
             return response
         except (requests.RequestException, ConnectionError) as e:
-            raise NetworkError(f"Network request failed: {e}")
+            raise NetworkError(f"Network request failed: {e}") from e
 
     def get_balance(self, address: str) -> int:
         """
