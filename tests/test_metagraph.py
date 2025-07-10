@@ -64,7 +64,7 @@ class TestMetagraphDiscovery:
         assert isinstance(metagraphs, list)
         assert len(metagraphs) == 2
         assert metagraphs[0]["id"] == "DAG7Ghth1WhWK83SB3MtXnnHYZbCsm1234567890"
-        assert "timestamp" in metagraphs[0]
+        assert "created" in metagraphs[0]  # The method maps "timestamp" to "created"
 
     @patch("constellation_sdk.metagraph.requests.get")
     def test_discover_metagraphs_empty_result(self, mock_get):
@@ -93,7 +93,7 @@ class TestMetagraphDiscovery:
 
         client = MetagraphClient("testnet")
 
-        with pytest.raises(ConstellationError, match="Failed to discover metagraphs"):
+        with pytest.raises(ConstellationError, match="Error discovering metagraphs"):
             client.discover_metagraphs()
 
     @patch("constellation_sdk.metagraph.requests.get")

@@ -199,19 +199,19 @@ def create_account(ctx, save_key):
 
     output = {
         "address": acc.address,
-        "public_key": acc.public_key.hex(),
-        "private_key": acc.private_key.hex() if save_key else "***HIDDEN***",
+        "public_key": acc.public_key_hex,
+        "private_key": acc.private_key_hex if save_key else "***HIDDEN***",
     }
 
     if save_key:
-        cli_config.set("default_private_key", acc.private_key.hex())
+        cli_config.set("default_private_key", acc.private_key_hex)
         click.echo("🔐 Private key saved to CLI config")
 
     click.echo("✅ New account created:")
     click.echo(format_output(output, ctx.obj["output_format"]))
 
     if not save_key:
-        click.echo(f"\n🔑 Private Key (save this!): {acc.private_key.hex()}")
+        click.echo(f"\n🔑 Private Key (save this!): {acc.private_key_hex}")
 
 
 @account.command("info")

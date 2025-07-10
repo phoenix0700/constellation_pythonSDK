@@ -15,9 +15,10 @@ import requests
 
 from .config import NetworkConfig
 from .network import NetworkError
+from .exceptions import ConstellationError
 
 
-class MetagraphError(Exception):
+class MetagraphError(ConstellationError):
     """Exception for metagraph-related errors."""
 
     pass
@@ -71,6 +72,10 @@ class MetagraphClient:
             network: Network to connect to ('mainnet', 'testnet', 'integrationnet')
                     Default is 'mainnet' for production use
         """
+        valid_networks = ["mainnet", "testnet", "integrationnet"]
+        if network not in valid_networks:
+            raise ConstellationError(f"Invalid network '{network}'. Must be one of: {valid_networks}")
+        
         self.network = network
         self.base_url = f"https://be-{network}.constellationnetwork.io"
 

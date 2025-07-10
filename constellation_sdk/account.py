@@ -50,7 +50,7 @@ class Account:
         Args:
             private_key_hex: Hex string of private key. If None, generates new key.
         """
-        if private_key_hex:
+        if private_key_hex is not None:
             self.private_key = self._load_private_key(private_key_hex)
         else:
             self.private_key = ec.generate_private_key(ec.SECP256K1())
@@ -61,7 +61,20 @@ class Account:
     def _load_private_key(self, hex_key: str) -> ec.EllipticCurvePrivateKey:
         """Load private key from hex string."""
         try:
+            # Validate input type
+            if not isinstance(hex_key, str):
+                raise TypeError(f"fromhex() argument must be str, not {type(hex_key).__name__}")
+            
+            # Validate hex string format
+            if not hex_key:
+                raise ValueError("Private key cannot be empty")
+                
             key_bytes = bytes.fromhex(hex_key)
+            
+            # Validate key length (32 bytes for SECP256K1)
+            if len(key_bytes) != 32:
+                raise ValueError(f"Private key must be 32 bytes (64 hex chars), got {len(key_bytes)} bytes")
+                
             return ec.derive_private_key(
                 int.from_bytes(key_bytes, "big"), ec.SECP256K1()
             )
