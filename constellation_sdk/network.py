@@ -8,12 +8,7 @@ from typing import Any, Dict, List, Optional
 import requests
 
 from .config import DEFAULT_CONFIGS, NetworkConfig
-
-
-class NetworkError(Exception):
-    """Exception for network-related errors."""
-
-    pass
+from .exceptions import NetworkError
 
 
 class Network:
@@ -53,7 +48,7 @@ class Network:
         try:
             response = requests.request(method, url, timeout=30, **kwargs)
             return response
-        except requests.RequestException as e:
+        except (requests.RequestException, ConnectionError) as e:
             raise NetworkError(f"Network request failed: {e}")
 
     def get_balance(self, address: str) -> int:

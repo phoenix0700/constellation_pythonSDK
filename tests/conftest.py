@@ -36,7 +36,7 @@ def test_accounts(alice_account, bob_account):
 @pytest.fixture
 def known_private_key():
     """A known private key for deterministic testing."""
-    return "a1b2c3d4e5f67890123456789012345678901234567890abcdef123456789abcdef"
+    return "a1b2c3d4e5f67890123456789012345678901234567890abcdef1234567890ab"
 
 
 @pytest.fixture

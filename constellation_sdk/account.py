@@ -13,12 +13,7 @@ from typing import Any, Dict, Optional
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-
-
-class ConstellationError(Exception):
-    """Base exception for Constellation SDK errors."""
-
-    pass
+from .exceptions import ConstellationError
 
 
 class Account:
