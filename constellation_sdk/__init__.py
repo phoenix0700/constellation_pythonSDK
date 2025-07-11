@@ -10,7 +10,7 @@ performance optimizations, async support, and configuration management.
 Architecture:
 - Account: Key management and transaction signing
 - Transactions: Centralized transaction creation for all types
-- MetagraphClient: Metagraph discovery and queries  
+- MetagraphClient: Metagraph discovery and queries
 - Network: Core DAG network operations
 - AsyncNetwork: High-performance async network operations (Phase 2)
 - AsyncMetagraphClient: Async metagraph operations (Phase 2)
@@ -20,7 +20,7 @@ Architecture:
 - Exceptions: Hierarchical error handling
 """
 
-from .account import Account, ConstellationError
+from .account import Account
 from .config import (
     DEFAULT_CONFIGS,
     AsyncConfig,
@@ -88,6 +88,7 @@ from .exceptions import (
     AmountValidationError,
     APIError,
     ConfigurationError,
+    ConstellationError,
     HTTPError,
     InvalidDataError,
     MetagraphIdValidationError,

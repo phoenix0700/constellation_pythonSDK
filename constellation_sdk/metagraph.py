@@ -4,8 +4,8 @@ Handles metagraph discovery, information retrieval, and balance queries.
 
 For creating metagraph transactions, use the Transactions class.
 
-IMPORTANT: Discovery shows ~128 contracts across all networks, but most are 
-automated node testing deployments. Real production metagraphs are primarily 
+IMPORTANT: Discovery shows ~128 contracts across all networks, but most are
+automated node testing deployments. Real production metagraphs are primarily
 on MainNet (~7) with some active ones on test networks.
 """
 
