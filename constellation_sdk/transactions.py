@@ -473,3 +473,29 @@ def create_metagraph_data_transaction(
 ) -> Dict[str, Any]:
     """Convenience function for metagraph data transaction creation."""
     return Transactions.create_data_submission(sender, data, metagraph_id, **kwargs)
+
+
+# Additional convenience functions with alternative names expected by tests
+def create_dag_transfer(
+    source: str, destination: str, amount: Union[int, float], **kwargs
+) -> Dict[str, Any]:
+    """Convenience function for DAG transfer creation."""
+    return Transactions.create_dag_transfer(source, destination, amount, **kwargs)
+
+
+def create_token_transfer(
+    source: str,
+    destination: str, 
+    amount: Union[int, float],
+    metagraph_id: str,
+    **kwargs,
+) -> Dict[str, Any]:
+    """Convenience function for token transfer creation."""
+    return Transactions.create_token_transfer(source, destination, amount, metagraph_id, **kwargs)
+
+
+def create_data_submission(
+    source: str, data: Dict[str, Any], metagraph_id: str, **kwargs
+) -> Dict[str, Any]:
+    """Convenience function for data submission creation."""
+    return Transactions.create_data_submission(source, data, metagraph_id, **kwargs)

@@ -50,6 +50,9 @@ from .transactions import (
     Transactions,
     create_dag_transaction,
     create_metagraph_token_transaction,
+    create_dag_transfer,
+    create_token_transfer,
+    create_data_submission,
 )
 
 # Async support (Phase 2) - Optional import to handle missing aiohttp
@@ -151,6 +154,9 @@ __all__ = [
     "create_dag_transaction",
     "create_metagraph_token_transaction",
     "create_metagraph_data_transaction",
+    "create_dag_transfer",
+    "create_token_transfer",
+    "create_data_submission",
     # Core exceptions
     "ConstellationError",
     "TransactionError",
