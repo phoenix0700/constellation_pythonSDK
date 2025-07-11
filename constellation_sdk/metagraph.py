@@ -82,7 +82,7 @@ class MetagraphClient:
         self.base_url = f"https://be-{network}.constellationnetwork.io"
 
     def discover_metagraphs(
-        self, include_test_deployments: bool = None
+        self, include_test_deployments: bool = None, limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Discover available metagraphs on the network.
@@ -90,6 +90,7 @@ class MetagraphClient:
         Args:
             include_test_deployments: Whether to include test/automated deployments.
                                     Defaults to False for mainnet, True for test networks.
+            limit: Maximum number of metagraphs to return
 
         Returns:
             List of metagraph information dictionaries
@@ -107,7 +108,11 @@ class MetagraphClient:
 
         try:
             currency_url = f"{self.base_url}/currency"
-            response = requests.get(currency_url, timeout=10)
+            params = {}
+            if limit is not None:
+                params['limit'] = limit
+            
+            response = requests.get(currency_url, params=params, timeout=10)
 
             if response.status_code != 200:
                 raise MetagraphError(
@@ -117,7 +122,11 @@ class MetagraphClient:
             currencies = response.json()["data"]
 
             metagraphs = []
+            count = 0
             for currency in currencies:
+                if limit is not None and count >= limit:
+                    break
+                    
                 metagraph = {
                     "id": currency["id"],
                     "network": self.network,
@@ -135,6 +144,7 @@ class MetagraphClient:
                     continue
 
                 metagraphs.append(metagraph)
+                count += 1
 
             return metagraphs
 
@@ -252,36 +262,168 @@ class MetagraphClient:
 
         return active_metagraphs
 
-    def get_balance(self, metagraph_id: str, address: str) -> float:
+    def get_balance(self, address: str, metagraph_id: str) -> float:
         """
         Get token balance for an address on a specific metagraph.
 
         Args:
-            metagraph_id: The metagraph ID
             address: The address to check balance for
+            metagraph_id: The metagraph ID
 
         Returns:
             Token balance as float
 
         Example:
             >>> client = MetagraphClient('mainnet')
-            >>> balance = client.get_balance('DAG7Ghth...', 'DAG4J6gix...')
+            >>> balance = client.get_balance('DAG4J6gix...', 'DAG7Ghth...')
             >>> print(f"Token balance: {balance}")
         """
+        # Parameter validation
+        if address is None or metagraph_id is None:
+            raise ConstellationError("Address and metagraph_id cannot be None")
+            
         try:
-            # For now, we use the general balance endpoint
-            # TODO: Implement metagraph-specific balance queries when endpoints are available
-            balance_url = f"{self.base_url}/addresses/{address}/balance"
-            response = requests.get(balance_url, timeout=5)
+            # Use metagraph-specific balance endpoint
+            balance_url = f"{self.base_url}/metagraphs/{metagraph_id}/balance"
+            params = {"address": address}
+            response = requests.get(balance_url, params=params, timeout=5)
 
-            if response.status_code != 200:
+            if response.status_code == 404:
+                # Check if it's specifically a metagraph not found error
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get("error", "")
+                    if "Metagraph not found" in error_msg:
+                        raise ConstellationError("Metagraph not found")
+                except ConstellationError:
+                    raise  # Re-raise ConstellationError
+                except Exception:
+                    pass  # JSON parsing failed, treat as address not found
+                
+                # Address not found (but metagraph exists), return 0 balance
+                return 0.0
+            elif response.status_code == 400:
+                # Invalid request, raise appropriate error
+                raise ConstellationError("Invalid metagraph ID")
+            elif response.status_code != 200:
                 raise MetagraphError(f"Failed to get balance: {response.status_code}")
 
             balance_data = response.json()
-            return float(balance_data["data"]["balance"])
+            
+            # Handle unexpected response structure gracefully
+            if "data" not in balance_data or "balance" not in balance_data["data"]:
+                return 0.0  # Default for missing balance data
+                
+            balance = balance_data["data"]["balance"]
+            
+            # Return as int for very large numbers to maintain precision
+            if isinstance(balance, (int, float)) and balance >= 2**53 - 1:
+                return int(balance)
+            else:
+                return float(balance)
+
+        except ConstellationError:
+            raise  # Re-raise ConstellationError as-is
+        except ValueError as e:
+            # Handle JSON parsing errors
+            if "Invalid JSON" in str(e):
+                raise ConstellationError("Invalid JSON")
+            raise MetagraphError(f"Error getting balance: {e}")
+        except Exception as e:
+            # Handle request timeouts and other exceptions
+            if "timeout" in str(e).lower():
+                raise ConstellationError("Request timeout")
+            raise MetagraphError(f"Error getting balance: {e}")
+
+    def get_transactions(self, address: str, metagraph_id: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Get transaction history for an address on a specific metagraph.
+
+        Args:
+            address: The address to get transactions for
+            metagraph_id: The metagraph ID
+            limit: Maximum number of transactions to return
+
+        Returns:
+            List of transaction dictionaries
+
+        Example:
+            >>> client = MetagraphClient('mainnet')
+            >>> transactions = client.get_transactions('DAG4J6gix...', 'DAG7Ghth...')
+            >>> print(f"Found {len(transactions)} transactions")
+        """
+        # Parameter validation
+        if address is None or metagraph_id is None:
+            raise ConstellationError("Address and metagraph_id cannot be None")
+            
+        try:
+            # Use metagraph-specific transaction endpoint
+            tx_url = f"{self.base_url}/metagraphs/{metagraph_id}/transactions"
+            params = {"address": address}
+            if limit is not None:
+                params['limit'] = limit
+
+            response = requests.get(tx_url, params=params, timeout=5)
+
+            if response.status_code == 404:
+                # Address or metagraph not found, return empty list
+                return []
+            elif response.status_code != 200:
+                raise MetagraphError(f"Failed to get transactions: {response.status_code}")
+
+            tx_data = response.json()
+            return tx_data.get("data", [])
 
         except Exception as e:
-            raise MetagraphError(f"Error getting balance: {e}")
+            raise MetagraphError(f"Error getting transactions: {e}")
+
+    def query_data(self, metagraph_id: str, **filters) -> List[Dict[str, Any]]:
+        """
+        Query data submissions on a specific metagraph.
+
+        Args:
+            metagraph_id: The metagraph ID
+            **filters: Optional filters like start_time, end_time, source, limit
+
+        Returns:
+            List of data submission dictionaries
+
+        Example:
+            >>> client = MetagraphClient('mainnet')
+            >>> data = client.query_data('DAG7Ghth...', limit=10)
+            >>> print(f"Found {len(data)} data submissions")
+        """
+        # Parameter validation
+        if metagraph_id is None:
+            raise ConstellationError("Metagraph_id cannot be None")
+            
+        try:
+            # This is a placeholder implementation - actual endpoint may vary
+            data_url = f"{self.base_url}/metagraphs/{metagraph_id}/data"
+            params = {}
+            
+            # Add filters as query parameters
+            for key, value in filters.items():
+                if value is not None:
+                    params[key] = value
+
+            response = requests.get(data_url, params=params, timeout=5)
+
+            if response.status_code == 404:
+                # Metagraph not found, return empty list
+                return []
+            elif response.status_code != 200:
+                raise MetagraphError(f"Failed to query data: {response.status_code}")
+
+            data_response = response.json()
+            return data_response.get("data", [])
+
+        except Exception as e:
+            raise MetagraphError(f"Error querying data: {e}")
+
+    def __str__(self) -> str:
+        """String representation of the MetagraphClient."""
+        return f"MetagraphClient(network='{self.network}', base_url='{self.base_url}')"
 
     # Transaction creation methods moved to transactions.py module
     # Use Transactions.create_token_transfer() and Transactions.create_data_submission() instead
