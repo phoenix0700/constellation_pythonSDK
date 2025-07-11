@@ -485,13 +485,15 @@ def create_dag_transfer(
 
 def create_token_transfer(
     source: str,
-    destination: str, 
+    destination: str,
     amount: Union[int, float],
     metagraph_id: str,
     **kwargs,
 ) -> Dict[str, Any]:
     """Convenience function for token transfer creation."""
-    return Transactions.create_token_transfer(source, destination, amount, metagraph_id, **kwargs)
+    return Transactions.create_token_transfer(
+        source, destination, amount, metagraph_id, **kwargs
+    )
 
 
 def create_data_submission(
