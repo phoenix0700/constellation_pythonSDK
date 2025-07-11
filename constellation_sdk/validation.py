@@ -388,10 +388,14 @@ class DataValidator:
             ValidationError: If data is invalid
         """
         if data is None:
-            raise ValidationError("Data payload cannot be None", field="data", value=data)
+            raise ValidationError(
+                "Data payload cannot be None", field="data", value=data
+            )
 
         if isinstance(data, dict) and not data:
-            raise ValidationError("Data payload cannot be empty", field="data", value=data)
+            raise ValidationError(
+                "Data payload cannot be empty", field="data", value=data
+            )
 
         # Check data size (rough estimate)
         try:

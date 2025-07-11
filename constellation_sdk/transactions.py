@@ -255,7 +255,7 @@ class Transactions:
     def create_batch_transfer(
         source: str,
         transfers: Optional[List[Dict[str, Any]]] = None,
-        token_transfers: Optional[List[Dict[str, Any]]] = None, 
+        token_transfers: Optional[List[Dict[str, Any]]] = None,
         data_submissions: Optional[List[Dict[str, Any]]] = None,
         fee: Union[int, float] = 0,
     ) -> Dict[str, List[Dict[str, Any]]]:
@@ -265,7 +265,7 @@ class Transactions:
         Args:
             source: Source address for all transactions
             transfers: List of DAG transfer specifications
-            token_transfers: List of token transfer specifications  
+            token_transfers: List of token transfer specifications
             data_submissions: List of data submission specifications
             fee: Default fee for all transactions
 
@@ -281,24 +281,22 @@ class Transactions:
         """
         # Validate source address
         AddressValidator.validate(source)
-        
+
         # Validate that at least some transfers are provided
         all_transfers = []
         if transfers:
             all_transfers.extend(transfers)
         if token_transfers:
-            all_transfers.extend(token_transfers) 
+            all_transfers.extend(token_transfers)
         if data_submissions:
             all_transfers.extend(data_submissions)
-            
-        if not all_transfers:
-            raise ValidationError("At least one transfer must be provided", field="transfers")
 
-        result = {
-            "dag_transfers": [],
-            "token_transfers": [],
-            "data_submissions": []
-        }
+        if not all_transfers:
+            raise ValidationError(
+                "At least one transfer must be provided", field="transfers"
+            )
+
+        result = {"dag_transfers": [], "token_transfers": [], "data_submissions": []}
 
         # Process DAG transfers
         if transfers:
@@ -309,11 +307,11 @@ class Transactions:
                     amount=transfer["amount"],
                     fee=transfer.get("fee", fee),
                     salt=transfer.get("salt"),
-                    parent=transfer.get("parent")
+                    parent=transfer.get("parent"),
                 )
                 result["dag_transfers"].append(dag_tx)
 
-        # Process token transfers  
+        # Process token transfers
         if token_transfers:
             for transfer in token_transfers:
                 token_tx = Transactions.create_token_transfer(
@@ -322,7 +320,7 @@ class Transactions:
                     amount=transfer["amount"],
                     metagraph_id=transfer["metagraph_id"],
                     fee=transfer.get("fee", fee),
-                    salt=transfer.get("salt")
+                    salt=transfer.get("salt"),
                 )
                 result["token_transfers"].append(token_tx)
 
@@ -335,7 +333,7 @@ class Transactions:
                     metagraph_id=submission["metagraph_id"],
                     destination=submission.get("destination", source),
                     timestamp=submission.get("timestamp"),
-                    salt=submission.get("salt")
+                    salt=submission.get("salt"),
                 )
                 result["data_submissions"].append(data_tx)
 
@@ -360,6 +358,42 @@ class Transactions:
             Current timestamp as integer
         """
         return int(time.time())
+
+    @staticmethod
+    def _validate_dag_address(address: str) -> None:
+        """
+        Validate a DAG address format.
+
+        Args:
+            address: DAG address to validate
+
+        Raises:
+            ValidationError: If address is invalid
+        """
+        try:
+            AddressValidator.validate(address)
+        except Exception as e:
+            raise ValidationError(
+                f"Invalid DAG address: {str(e)}", field="address", value=address
+            )
+
+    @staticmethod
+    def _validate_amount(amount: Union[int, float]) -> None:
+        """
+        Validate a transaction amount.
+
+        Args:
+            amount: Amount to validate
+
+        Raises:
+            ValidationError: If amount is invalid
+        """
+        try:
+            AmountValidator.validate(amount)
+        except Exception as e:
+            raise ValidationError(
+                f"Invalid amount: {str(e)}", field="amount", value=amount
+            )
 
     @staticmethod
     def estimate_transaction_size(transaction_data: Dict[str, Any]) -> int:
