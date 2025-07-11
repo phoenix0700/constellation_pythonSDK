@@ -10,6 +10,7 @@ from constellation_sdk import (
     Account,
     MetagraphClient,
     Network,
+    Transactions,
     discover_production_metagraphs,
     get_realistic_metagraph_summary,
 )
@@ -104,34 +105,44 @@ def demo_token_transactions():
         print(f"\n💸 Creating token transactions for: {metagraph_id[:25]}...")
 
         # Standard token transfer
-        token_tx = client.create_token_transaction(
-            sender,
-            recipient.address,
-            1000000000,  # 10 tokens (assuming 8 decimals)
-            metagraph_id,
+        token_tx = Transactions.create_token_transfer(
+            source=sender.address,
+            destination=recipient.address,
+            amount=1000000000,  # 10 tokens (assuming 8 decimals)
+            metagraph_id=metagraph_id,
             fee=0,
         )
+        # Sign the transaction
+        signed_token_tx = sender.sign_metagraph_transaction(token_tx)
 
         print(f"✅ Standard transfer: 10 tokens")
-        print(f"   Transaction keys: {list(token_tx.keys())}")
-        print(f"   Value keys: {list(token_tx['value'].keys())}")
-        print(f"   Signature length: {len(token_tx['proofs'][0]['signature'])} chars")
+        print(f"   Transaction keys: {list(signed_token_tx.keys())}")
+        print(f"   Value keys: {list(signed_token_tx['value'].keys())}")
+        print(f"   Signature length: {len(signed_token_tx['proofs'][0]['signature'])} chars")
 
         # Micro-transaction (fractional tokens)
-        micro_tx = client.create_token_transaction(
-            sender, recipient.address, 1000000, metagraph_id  # 0.01 tokens
+        micro_tx = Transactions.create_token_transfer(
+            source=sender.address,
+            destination=recipient.address,
+            amount=1000000,  # 0.01 tokens
+            metagraph_id=metagraph_id
         )
+        signed_micro_tx = sender.sign_metagraph_transaction(micro_tx)
 
         print(f"✅ Micro-transaction: 0.01 tokens")
 
         # Large transaction
-        large_tx = client.create_token_transaction(
-            sender, recipient.address, 100000000000, metagraph_id  # 1000 tokens
+        large_tx = Transactions.create_token_transfer(
+            source=sender.address,
+            destination=recipient.address,
+            amount=100000000000,  # 1000 tokens
+            metagraph_id=metagraph_id
         )
+        signed_large_tx = sender.sign_metagraph_transaction(large_tx)
 
         print(f"✅ Large transfer: 1000 tokens")
 
-        return token_tx
+        return signed_token_tx
     else:
         print("   ℹ️  No production metagraphs available for demo")
         return None
@@ -155,9 +166,9 @@ def demo_data_transactions():
         print(f"\n📤 Submitting data to: {metagraph_id[:25]}...")
 
         # IoT sensor data
-        sensor_tx = client.create_data_transaction(
-            data_account,
-            {
+        sensor_tx = Transactions.create_data_submission(
+            source=data_account.address,
+            data={
                 "sensor_type": "temperature",
                 "value": 25.7,
                 "unit": "celsius",
@@ -165,16 +176,17 @@ def demo_data_transactions():
                 "timestamp": "2024-01-15T10:30:00Z",
                 "device_id": "TEMP_001",
             },
-            metagraph_id,
+            metagraph_id=metagraph_id,
         )
+        signed_sensor_tx = data_account.sign_metagraph_transaction(sensor_tx)
 
         print(f"✅ IoT sensor data submitted")
-        print(f"   Data keys: {list(sensor_tx['value']['data'].keys())}")
+        print(f"   Data keys: {list(signed_sensor_tx['value']['data'].keys())}")
 
         # Supply chain tracking
-        supply_tx = client.create_data_transaction(
-            data_account,
-            {
+        supply_tx = Transactions.create_data_submission(
+            source=data_account.address,
+            data={
                 "product_id": "PROD_12345",
                 "batch_number": "B2024001",
                 "origin": "Factory_Shanghai",
@@ -183,15 +195,16 @@ def demo_data_transactions():
                 "carrier": "GlobalShipping",
                 "tracking_number": "GS789456123",
             },
-            metagraph_id,
+            metagraph_id=metagraph_id,
         )
+        signed_supply_tx = data_account.sign_metagraph_transaction(supply_tx)
 
         print(f"✅ Supply chain data submitted")
 
         # Financial/audit data
-        audit_tx = client.create_data_transaction(
-            data_account,
-            {
+        audit_tx = Transactions.create_data_submission(
+            source=data_account.address,
+            data={
                 "transaction_id": "TXN_789",
                 "audit_type": "compliance_check",
                 "status": "verified",
@@ -199,15 +212,16 @@ def demo_data_transactions():
                 "compliance_score": 95.5,
                 "risk_level": "low",
             },
-            metagraph_id,
+            metagraph_id=metagraph_id,
         )
+        signed_audit_tx = data_account.sign_metagraph_transaction(audit_tx)
 
         print(f"✅ Audit/compliance data submitted")
 
         # Custom application data
-        app_tx = client.create_data_transaction(
-            data_account,
-            {
+        app_tx = Transactions.create_data_submission(
+            source=data_account.address,
+            data={
                 "app": "social_media_dapp",
                 "action": "post_content",
                 "user_id": "user_456",
@@ -215,12 +229,13 @@ def demo_data_transactions():
                 "likes": 0,
                 "shares": 0,
             },
-            metagraph_id,
+            metagraph_id=metagraph_id,
         )
+        signed_app_tx = data_account.sign_metagraph_transaction(app_tx)
 
         print(f"✅ Social media DApp data submitted")
 
-        return sensor_tx, supply_tx, audit_tx, app_tx
+        return signed_sensor_tx, signed_supply_tx, signed_audit_tx, signed_app_tx
     else:
         print("   ℹ️  No production metagraphs available for demo")
         return None

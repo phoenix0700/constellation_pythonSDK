@@ -53,7 +53,7 @@ def demonstrate_new_architecture():
     # 2.1 DAG Token Transfer
     print("2.1 DAG Token Transfer:")
     dag_tx_data = Transactions.create_dag_transfer(
-        sender=alice, destination=bob.address, amount=100000000, fee=0  # 1 DAG
+        source=alice.address, destination=bob.address, amount=100000000, fee=0  # 1 DAG
     )
     print(f"   📄 Transaction data created: {list(dag_tx_data.keys())}")
 
@@ -69,7 +69,7 @@ def demonstrate_new_architecture():
     ]
 
     batch_txs = Transactions.create_batch_transfer(
-        sender=alice, transfers=transfers, transaction_type="dag"
+        source=alice.address, transfers=transfers
     )
     print(f"   📦 Batch created: {len(batch_txs)} transactions")
     print(f"   🎯 Consistent API for single and batch operations")
@@ -103,7 +103,7 @@ def demonstrate_new_architecture():
         # 4.1 Token Transfer
         print("4.1 Metagraph Token Transfer:")
         token_tx = Transactions.create_token_transfer(
-            sender=alice,
+            source=alice.address,
             destination=bob.address,
             amount=1000000000,  # 10 tokens
             metagraph_id=mg_id,
@@ -114,7 +114,7 @@ def demonstrate_new_architecture():
         # 4.2 Data Submission
         print("\n4.2 Metagraph Data Submission:")
         data_tx = Transactions.create_data_submission(
-            sender=alice,
+            source=alice.address,
             data={
                 "sensor_type": "temperature",
                 "value": 25.7,
@@ -138,20 +138,18 @@ def demonstrate_new_architecture():
 
         # Create token transfers
         token_batch = Transactions.create_batch_transfer(
-            sender=alice,
-            transfers=mixed_batch[:1],  # First item (token)
-            transaction_type="token",
+            source=alice.address,
+            token_transfers=mixed_batch[:1],  # First item (token)
         )
 
         # Create data submissions
         data_batch = Transactions.create_batch_transfer(
-            sender=alice,
-            transfers=mixed_batch[1:],  # Second item (data)
-            transaction_type="data",
+            source=alice.address,
+            data_submissions=mixed_batch[1:],  # Second item (data)
         )
 
-        print(f"   📦 Token batch: {len(token_batch)} transactions")
-        print(f"   📦 Data batch: {len(data_batch)} transactions")
+        print(f"   📦 Token batch: {len(token_batch.get('token_transfers', []))} transactions")
+        print(f"   📦 Data batch: {len(data_batch.get('data_submissions', []))} transactions")
         print(f"   🎯 Flexible batching for different transaction types")
 
     # ====================
@@ -234,7 +232,7 @@ def demonstrate_convenience_functions():
     # These work for backward compatibility
     print("Using convenience functions for smooth migration:")
 
-    dag_tx = create_dag_transaction(alice, bob.address, 100000000)
+    dag_tx = create_dag_transaction(alice.address, bob.address, 100000000)
     print(f"✅ create_dag_transaction() works")
 
     # Note: These would need a real metagraph ID

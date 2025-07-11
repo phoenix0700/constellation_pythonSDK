@@ -177,7 +177,15 @@ class MetagraphIdValidator:
     Metagraph ID validation.
 
     Validates metagraph IDs according to Constellation standards.
+    Metagraph IDs are DAG addresses that can be in hex format (38 chars) or Base58 format (40 chars).
     """
+
+    # Base58 alphabet (Bitcoin-style, excludes 0, O, I, l for readability)
+    BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    
+    # Patterns for different formats
+    HEX_PATTERN = re.compile(r"^DAG[0-9A-Fa-f]{35}$")  # 38 chars total
+    BASE58_PATTERN = re.compile(r"^DAG[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{37}$")  # 40 chars total
 
     @classmethod
     def validate(cls, metagraph_id: str) -> None:
@@ -200,12 +208,27 @@ class MetagraphIdValidator:
                 metagraph_id, "Metagraph ID cannot be empty"
             )
 
-        # Metagraph IDs should be DAG addresses
-        try:
-            AddressValidator.validate(metagraph_id, check_checksum=False)
-        except AddressValidationError as e:
+        if not metagraph_id.startswith("DAG"):
             raise MetagraphIdValidationError(
-                metagraph_id, f"Invalid format: {e.message}"
+                metagraph_id, "Metagraph ID must start with 'DAG'"
+            )
+
+        # Check for valid formats: either 38 chars (hex) or 40 chars (base58)
+        if len(metagraph_id) == 38:
+            # Standard DAG address format (hex)
+            if not cls.HEX_PATTERN.match(metagraph_id):
+                raise MetagraphIdValidationError(
+                    metagraph_id, "Invalid hex format for 38-character metagraph ID"
+                )
+        elif len(metagraph_id) == 40:
+            # Extended metagraph format (base58)
+            if not cls.BASE58_PATTERN.match(metagraph_id):
+                raise MetagraphIdValidationError(
+                    metagraph_id, "Invalid Base58 format for 40-character metagraph ID"
+                )
+        else:
+            raise MetagraphIdValidationError(
+                metagraph_id, f"Metagraph ID must be 38 or 40 characters, got {len(metagraph_id)}"
             )
 
 
