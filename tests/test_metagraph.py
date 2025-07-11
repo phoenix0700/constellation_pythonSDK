@@ -60,11 +60,10 @@ class TestMetagraphDiscovery:
         call_args = str(mock_get.call_args)
         assert "currency" in call_args.lower()
 
-        # Validate response
-        assert isinstance(metagraphs, list)
+        # Validate specific metagraph in response
         assert len(metagraphs) == 2
-        assert metagraphs[0]["id"] == "DAG7Ghth1WhWK83SB3MtXnnHYZbCsm1234567890"
-        assert "created" in metagraphs[0]  # The method maps "timestamp" to "created"
+        assert metagraphs[0]["id"] == "DAG31fddd28e278f8086f52cbd40abe08a8692"
+        assert metagraphs[0]["network"] == "testnet"
 
     @patch("constellation_sdk.metagraph.requests.get")
     def test_discover_metagraphs_empty_result(self, mock_get):

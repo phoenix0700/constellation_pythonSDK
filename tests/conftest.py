@@ -101,17 +101,19 @@ def mock_network_responses():
 
 @pytest.fixture
 def mock_metagraph_responses():
-    """Mock metagraph response data."""
+    """Mock responses for metagraph API calls."""
     return {
         "currency_response": {
             "data": [
                 {
-                    "id": "DAG7Ghth1WhWK83SB3MtXnnHYZbCsm1234567890",
-                    "timestamp": "2024-01-15T08:00:00Z",
+                    "id": "DAG31fddd28e278f8086f52cbd40abe08a8692",
+                    "timestamp": "2024-01-15T10:30:00Z",
+                    "category": "production",
                 },
                 {
-                    "id": "DAG8Ijui2XiXL94TC4OuYZcDtn2345678901",
-                    "timestamp": "2024-01-15T09:00:00Z",
+                    "id": "DAG31561b906ba994572c4fde88ef0f0c10514",
+                    "timestamp": "2024-01-15T11:00:00Z",
+                    "category": "test",
                 },
             ]
         },
@@ -122,7 +124,7 @@ def mock_metagraph_responses():
 @pytest.fixture
 def test_metagraph_id():
     """Test metagraph ID."""
-    return "DAG7Ghth1WhWK83SB3MtXnnHYZbCsm1234567890"
+    return "DAG31fddd28e278f8086f52cbd40abe08a8692"
 
 
 @pytest.fixture
@@ -224,9 +226,9 @@ def mock_metagraph_client(mock_metagraph_responses):
 def valid_dag_addresses():
     """Valid DAG addresses for testing."""
     return [
-        "DAG4J6gixVGKYmcZs9Wmkyrv8ERp39vxtjwbjV5Q",
-        "DAG3Q4LkJWcdw12nzTRE5hpAZgQiAWQSFYFYUJVw",
-        "DAG7Ghth1WhWK83SB3MtXnnHYZbCsm89LdZMzBw2",
+        "DAG31fddd28e278f8086f52cbd40abe08a8692",
+        "DAG31561b906ba994572c4fde88ef0f0c10514", 
+        "DAGb224228246d514031b2cba32a2e6083a917",
     ]
 
 
