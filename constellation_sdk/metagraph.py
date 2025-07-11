@@ -14,8 +14,8 @@ from typing import Any, Dict, List, Optional, Union
 import requests
 
 from .config import NetworkConfig
-from .network import NetworkError
 from .exceptions import ConstellationError
+from .network import NetworkError
 
 
 class MetagraphError(ConstellationError):
@@ -74,8 +74,10 @@ class MetagraphClient:
         """
         valid_networks = ["mainnet", "testnet", "integrationnet"]
         if network not in valid_networks:
-            raise ConstellationError(f"Invalid network '{network}'. Must be one of: {valid_networks}")
-        
+            raise ConstellationError(
+                f"Invalid network '{network}'. Must be one of: {valid_networks}"
+            )
+
         self.network = network
         self.base_url = f"https://be-{network}.constellationnetwork.io"
 

@@ -12,8 +12,12 @@ from urllib.parse import urljoin
 
 from .async_network import AsyncNetwork
 from .config import METAGRAPH_ENDPOINTS, NetworkConfig, get_config
-from .exceptions import (ConstellationError, MetagraphError, NetworkError,
-                         ValidationError)
+from .exceptions import (
+    ConstellationError,
+    MetagraphError,
+    NetworkError,
+    ValidationError,
+)
 from .logging import get_logger, get_performance_tracker
 from .validation import AddressValidator, AmountValidator
 

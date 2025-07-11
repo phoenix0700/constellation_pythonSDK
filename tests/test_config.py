@@ -13,13 +13,21 @@ from unittest.mock import patch
 
 import pytest
 
-from constellation_sdk.config import (DEFAULT_CONFIGS, AsyncConfig,
-                                      CacheConfig, ConfigManager,
-                                      LoggingConfig, NetworkConfig, SDKConfig,
-                                      create_custom_config, get_config,
-                                      load_config_from_file,
-                                      save_config_to_file, set_config,
-                                      update_config)
+from constellation_sdk.config import (
+    DEFAULT_CONFIGS,
+    AsyncConfig,
+    CacheConfig,
+    ConfigManager,
+    LoggingConfig,
+    NetworkConfig,
+    SDKConfig,
+    create_custom_config,
+    get_config,
+    load_config_from_file,
+    save_config_to_file,
+    set_config,
+    update_config,
+)
 from constellation_sdk.exceptions import ConfigurationError
 
 

@@ -56,7 +56,7 @@ class TestAccountCreation:
         for invalid_key in invalid_keys:
             with pytest.raises(ConstellationError):
                 Account(invalid_key)
-                
+
         # Test that None is valid (creates new account)
         account = Account(None)
         assert account.address.startswith("DAG")
@@ -248,7 +248,7 @@ class TestTransactionSigning:
         # Both signatures should be valid hex strings
         sig1 = signed_tx1["proofs"][0]["signature"]
         sig2 = signed_tx2["proofs"][0]["signature"]
-        
+
         assert isinstance(sig1, str)
         assert isinstance(sig2, str)
         assert len(sig1) > 0

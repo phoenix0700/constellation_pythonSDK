@@ -11,9 +11,14 @@ import hashlib
 import re
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from .exceptions import (AddressValidationError, AmountValidationError,
-                         InvalidDataError, MetagraphIdValidationError,
-                         TransactionValidationError, ValidationError)
+from .exceptions import (
+    AddressValidationError,
+    AmountValidationError,
+    InvalidDataError,
+    MetagraphIdValidationError,
+    TransactionValidationError,
+    ValidationError,
+)
 
 # =====================
 # Address Validation

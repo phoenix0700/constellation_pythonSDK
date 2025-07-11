@@ -63,18 +63,22 @@ class Account:
         try:
             # Validate input type
             if not isinstance(hex_key, str):
-                raise TypeError(f"fromhex() argument must be str, not {type(hex_key).__name__}")
-            
+                raise TypeError(
+                    f"fromhex() argument must be str, not {type(hex_key).__name__}"
+                )
+
             # Validate hex string format
             if not hex_key:
                 raise ValueError("Private key cannot be empty")
-                
+
             key_bytes = bytes.fromhex(hex_key)
-            
+
             # Validate key length (32 bytes for SECP256K1)
             if len(key_bytes) != 32:
-                raise ValueError(f"Private key must be 32 bytes (64 hex chars), got {len(key_bytes)} bytes")
-                
+                raise ValueError(
+                    f"Private key must be 32 bytes (64 hex chars), got {len(key_bytes)} bytes"
+                )
+
             return ec.derive_private_key(
                 int.from_bytes(key_bytes, "big"), ec.SECP256K1()
             )

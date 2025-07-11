@@ -15,11 +15,13 @@ import pytest
 # Try to import async components
 try:
     from constellation_sdk.async_network import (
-        AsyncHTTPClient, AsyncNetwork, create_async_network,
-        get_multiple_balances_concurrent)
+        AsyncHTTPClient,
+        AsyncNetwork,
+        create_async_network,
+        get_multiple_balances_concurrent,
+    )
     from constellation_sdk.config import AsyncConfig, NetworkConfig
-    from constellation_sdk.exceptions import (HTTPError, NetworkError,
-                                              TimeoutError)
+    from constellation_sdk.exceptions import HTTPError, NetworkError, TimeoutError
 
     ASYNC_AVAILABLE = True
 except ImportError:

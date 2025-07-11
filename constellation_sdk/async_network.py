@@ -25,8 +25,14 @@ except ImportError:
     ClientResponse = None
 
 from .config import AsyncConfig, NetworkConfig, get_config
-from .exceptions import (APIError, ConnectionError, ConstellationError,
-                         HTTPError, NetworkError, TimeoutError)
+from .exceptions import (
+    APIError,
+    ConnectionError,
+    ConstellationError,
+    HTTPError,
+    NetworkError,
+    TimeoutError,
+)
 from .logging import get_network_logger, get_performance_tracker
 from .validation import AddressValidator, AmountValidator
 

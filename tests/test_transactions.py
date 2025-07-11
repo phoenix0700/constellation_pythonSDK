@@ -516,9 +516,11 @@ class TestConvenienceFunctions:
 
     def test_convenience_import(self):
         """Test that convenience functions can be imported."""
-        from constellation_sdk import (create_dag_transfer,
-                                       create_data_submission,
-                                       create_token_transfer)
+        from constellation_sdk import (
+            create_dag_transfer,
+            create_data_submission,
+            create_token_transfer,
+        )
 
         # Should be callable functions
         assert callable(create_dag_transfer)
