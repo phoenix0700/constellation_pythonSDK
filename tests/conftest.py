@@ -227,7 +227,7 @@ def valid_dag_addresses():
     """Valid DAG addresses for testing."""
     return [
         "DAG31fddd28e278f8086f52cbd40abe08a8692",
-        "DAG31561b906ba994572c4fde88ef0f0c10514", 
+        "DAG31561b906ba994572c4fde88ef0f0c10514",
         "DAGb224228246d514031b2cba32a2e6083a917",
     ]
 
