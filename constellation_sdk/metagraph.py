@@ -110,8 +110,8 @@ class MetagraphClient:
             currency_url = f"{self.base_url}/currency"
             params = {}
             if limit is not None:
-                params['limit'] = limit
-            
+                params["limit"] = limit
+
             response = requests.get(currency_url, params=params, timeout=10)
 
             if response.status_code != 200:
@@ -126,7 +126,7 @@ class MetagraphClient:
             for currency in currencies:
                 if limit is not None and count >= limit:
                     break
-                    
+
                 metagraph = {
                     "id": currency["id"],
                     "network": self.network,
@@ -281,7 +281,7 @@ class MetagraphClient:
         # Parameter validation
         if address is None or metagraph_id is None:
             raise ConstellationError("Address and metagraph_id cannot be None")
-            
+
         try:
             # Use metagraph-specific balance endpoint
             balance_url = f"{self.base_url}/metagraphs/{metagraph_id}/balance"
@@ -299,7 +299,7 @@ class MetagraphClient:
                     raise  # Re-raise ConstellationError
                 except Exception:
                     pass  # JSON parsing failed, treat as address not found
-                
+
                 # Address not found (but metagraph exists), return 0 balance
                 return 0.0
             elif response.status_code == 400:
@@ -309,13 +309,13 @@ class MetagraphClient:
                 raise MetagraphError(f"Failed to get balance: {response.status_code}")
 
             balance_data = response.json()
-            
+
             # Handle unexpected response structure gracefully
             if "data" not in balance_data or "balance" not in balance_data["data"]:
                 return 0.0  # Default for missing balance data
-                
+
             balance = balance_data["data"]["balance"]
-            
+
             # Return as int for very large numbers to maintain precision
             if isinstance(balance, (int, float)) and balance >= 2**53 - 1:
                 return int(balance)
@@ -335,7 +335,9 @@ class MetagraphClient:
                 raise ConstellationError("Request timeout")
             raise MetagraphError(f"Error getting balance: {e}")
 
-    def get_transactions(self, address: str, metagraph_id: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_transactions(
+        self, address: str, metagraph_id: str, limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get transaction history for an address on a specific metagraph.
 
@@ -355,13 +357,13 @@ class MetagraphClient:
         # Parameter validation
         if address is None or metagraph_id is None:
             raise ConstellationError("Address and metagraph_id cannot be None")
-            
+
         try:
             # Use metagraph-specific transaction endpoint
             tx_url = f"{self.base_url}/metagraphs/{metagraph_id}/transactions"
             params = {"address": address}
             if limit is not None:
-                params['limit'] = limit
+                params["limit"] = limit
 
             response = requests.get(tx_url, params=params, timeout=5)
 
@@ -369,7 +371,9 @@ class MetagraphClient:
                 # Address or metagraph not found, return empty list
                 return []
             elif response.status_code != 200:
-                raise MetagraphError(f"Failed to get transactions: {response.status_code}")
+                raise MetagraphError(
+                    f"Failed to get transactions: {response.status_code}"
+                )
 
             tx_data = response.json()
             return tx_data.get("data", [])
@@ -396,12 +400,12 @@ class MetagraphClient:
         # Parameter validation
         if metagraph_id is None:
             raise ConstellationError("Metagraph_id cannot be None")
-            
+
         try:
             # This is a placeholder implementation - actual endpoint may vary
             data_url = f"{self.base_url}/metagraphs/{metagraph_id}/data"
             params = {}
-            
+
             # Add filters as query parameters
             for key, value in filters.items():
                 if value is not None:
