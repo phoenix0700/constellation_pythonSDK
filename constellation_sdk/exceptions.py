@@ -88,7 +88,10 @@ class TransactionValidationError(ValidationError):
     """Raised when transaction data validation fails."""
 
     def __init__(self, message, transaction_type=None, missing_fields=None):
-        super().__init__(message, error_code="TRANSACTION_VALIDATION_ERROR")
+        super().__init__(message, field="transaction")
+        self.error_code = "TRANSACTION_VALIDATION_ERROR"
+        self.transaction_type = transaction_type
+        self.missing_fields = missing_fields or []
         self.details.update(
             {
                 "transaction_type": transaction_type,

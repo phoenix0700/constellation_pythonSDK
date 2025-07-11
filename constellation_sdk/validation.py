@@ -379,19 +379,19 @@ class DataValidator:
     @classmethod
     def validate_data_payload(cls, data: Any) -> None:
         """
-        Validate data payload for metagraph submission.
+        Validate metagraph data payload.
 
         Args:
             data: Data payload to validate
 
         Raises:
-            InvalidDataError: If data is invalid
+            ValidationError: If data is invalid
         """
         if data is None:
-            raise InvalidDataError("Data payload cannot be None")
+            raise ValidationError("Data payload cannot be None", field="data", value=data)
 
         if isinstance(data, dict) and not data:
-            raise InvalidDataError("Data payload cannot be empty")
+            raise ValidationError("Data payload cannot be empty", field="data", value=data)
 
         # Check data size (rough estimate)
         try:

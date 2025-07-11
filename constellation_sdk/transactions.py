@@ -253,70 +253,93 @@ class Transactions:
 
     @staticmethod
     def create_batch_transfer(
-        sender: Account, transfers: list, transaction_type: str = "dag"
-    ) -> list:
+        source: str,
+        transfers: Optional[List[Dict[str, Any]]] = None,
+        token_transfers: Optional[List[Dict[str, Any]]] = None, 
+        data_submissions: Optional[List[Dict[str, Any]]] = None,
+        fee: Union[int, float] = 0,
+    ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Create multiple transactions in batch.
 
         Args:
-            sender: Account sending the transactions
-            transfers: List of transfer specifications
-            transaction_type: 'dag', 'token', or 'data'
+            source: Source address for all transactions
+            transfers: List of DAG transfer specifications
+            token_transfers: List of token transfer specifications  
+            data_submissions: List of data submission specifications
+            fee: Default fee for all transactions
 
         Returns:
-            List of signed transactions
+            Dictionary with structured transaction lists
 
         Example:
             >>> transfers = [
             ...     {'destination': 'DAG123...', 'amount': 1000000},
             ...     {'destination': 'DAG456...', 'amount': 2000000}
             ... ]
-            >>> txs = Transactions.create_batch_transfer(account, transfers, 'dag')
+            >>> batch = Transactions.create_batch_transfer(source='DAG789...', transfers=transfers)
         """
-        transactions = []
+        # Validate source address
+        AddressValidator.validate(source)
+        
+        # Validate that at least some transfers are provided
+        all_transfers = []
+        if transfers:
+            all_transfers.extend(transfers)
+        if token_transfers:
+            all_transfers.extend(token_transfers) 
+        if data_submissions:
+            all_transfers.extend(data_submissions)
+            
+        if not all_transfers:
+            raise ValidationError("At least one transfer must be provided", field="transfers")
 
-        for transfer in transfers:
-            try:
-                if transaction_type == "dag":
-                    tx_data = Transactions.create_dag_transfer(
-                        sender,
-                        transfer["destination"],
-                        transfer["amount"],
-                        transfer.get("fee", 0),
-                        transfer.get("parent"),
-                    )
-                    signed_tx = sender.sign_transaction(tx_data)
+        result = {
+            "dag_transfers": [],
+            "token_transfers": [],
+            "data_submissions": []
+        }
 
-                elif transaction_type == "token":
-                    signed_tx = Transactions.create_token_transfer(
-                        sender,
-                        transfer["destination"],
-                        transfer["amount"],
-                        transfer["metagraph_id"],
-                        transfer.get("fee", 0),
-                    )
+        # Process DAG transfers
+        if transfers:
+            for transfer in transfers:
+                dag_tx = Transactions.create_dag_transfer(
+                    source=source,
+                    destination=transfer["destination"],
+                    amount=transfer["amount"],
+                    fee=transfer.get("fee", fee),
+                    salt=transfer.get("salt"),
+                    parent=transfer.get("parent")
+                )
+                result["dag_transfers"].append(dag_tx)
 
-                elif transaction_type == "data":
-                    signed_tx = Transactions.create_data_submission(
-                        sender,
-                        transfer["data"],
-                        transfer["metagraph_id"],
-                        transfer.get("timestamp"),
-                    )
+        # Process token transfers  
+        if token_transfers:
+            for transfer in token_transfers:
+                token_tx = Transactions.create_token_transfer(
+                    source=source,
+                    destination=transfer["destination"],
+                    amount=transfer["amount"],
+                    metagraph_id=transfer["metagraph_id"],
+                    fee=transfer.get("fee", fee),
+                    salt=transfer.get("salt")
+                )
+                result["token_transfers"].append(token_tx)
 
-                else:
-                    raise TransactionError(
-                        f"Unknown transaction type: {transaction_type}"
-                    )
+        # Process data submissions
+        if data_submissions:
+            for submission in data_submissions:
+                data_tx = Transactions.create_data_submission(
+                    source=source,
+                    data=submission["data"],
+                    metagraph_id=submission["metagraph_id"],
+                    destination=submission.get("destination", source),
+                    timestamp=submission.get("timestamp"),
+                    salt=submission.get("salt")
+                )
+                result["data_submissions"].append(data_tx)
 
-                transactions.append(signed_tx)
-
-            except Exception as e:
-                # Log error but continue with other transactions
-                print(f"Failed to create transaction: {e}")
-                transactions.append(None)
-
-        return transactions
+        return result
 
     @staticmethod
     def _generate_salt() -> int:
