@@ -63,24 +63,22 @@ constellation account info
 ```python
 from constellation_sdk import Transactions
 
-# Initialize transaction handler
-transactions = Transactions()
-
 # Get current account state
 balance_info = network.get_balance(account.address)
 
-# Create transaction
-tx_data = transactions.create_dag_transaction(
-    account=account,
-    to_address="DAG456RecipientAddress...",
-    amount=10.5,  # Amount in DAG
-    fee=0,
-    last_ref_hash=balance_info.get('lastTransactionRef', {}).get('hash', ''),
-    last_ref_ordinal=balance_info.get('ordinal', 0)
+# Create transaction (New Architecture)
+tx_data = Transactions.create_dag_transfer(
+    sender=account,
+    destination="DAG456RecipientAddress...",
+    amount=1050000000,  # 10.5 DAG in Datolites (smallest units)
+    fee=0  # Constellation is feeless!
 )
 
+# Sign transaction
+signed_tx = account.sign_transaction(tx_data)
+
 # Submit transaction
-result = network.submit_transaction(tx_data)
+result = network.submit_transaction(signed_tx)
 print(f"Transaction submitted: {result['hash']}")
 ```
 

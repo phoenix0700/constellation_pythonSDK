@@ -236,10 +236,20 @@ def account_info(ctx, address):
 
     try:
         balance_info = network.get_balance(address)
+        
+        # Handle both dict and int responses from get_balance
+        if isinstance(balance_info, dict):
+            balance = balance_info.get("balance", "N/A")
+            ordinal = balance_info.get("ordinal", "N/A")
+        else:
+            # If it's just an integer balance
+            balance = balance_info
+            ordinal = "N/A"
+            
         output = {
             "address": address,
-            "balance": balance_info.get("balance", "N/A"),
-            "ordinal": balance_info.get("ordinal", "N/A"),
+            "balance": balance,
+            "ordinal": ordinal,
         }
 
         click.echo(format_output(output, ctx.obj["output_format"]))
@@ -261,10 +271,20 @@ def get_balance(ctx, address, watch):
 
     def fetch_balance():
         balance_info = network.get_balance(address)
+        
+        # Handle both dict and int responses from get_balance
+        if isinstance(balance_info, dict):
+            balance = balance_info.get("balance", "0")
+            ordinal = balance_info.get("ordinal", 0)
+        else:
+            # If it's just an integer balance
+            balance = balance_info
+            ordinal = 0
+            
         output = {
             "address": address,
-            "balance": balance_info.get("balance", "0"),
-            "ordinal": balance_info.get("ordinal", 0),
+            "balance": balance,
+            "ordinal": ordinal,
             "network": ctx.obj["network"],
         }
         return output
@@ -321,7 +341,15 @@ def send_transaction(ctx, amount, to_address, from_key, fee, dry_run):
 
     # Get current balance and ordinal
     balance_info = network.get_balance(acc.address)
-    current_balance = float(balance_info.get("balance", 0))
+    
+    # Handle both dict and int responses from get_balance
+    if isinstance(balance_info, dict):
+        current_balance = float(balance_info.get("balance", 0))
+        last_ref_hash = balance_info.get("lastTransactionRef", {}).get("hash", "")
+    else:
+        # If it's just an integer balance
+        current_balance = float(balance_info)
+        last_ref_hash = ""
 
     if amount > current_balance:
         click.echo(
@@ -338,7 +366,7 @@ def send_transaction(ctx, amount, to_address, from_key, fee, dry_run):
         destination=to_address,
         amount=amount,
         fee=fee,
-        parent=balance_info.get("lastTransactionRef", {}).get("hash", ""),
+        parent=last_ref_hash,
     )
 
     if dry_run:
@@ -450,7 +478,12 @@ def discover_metagraphs(ctx, production, use_async):
 
     async def async_discover():
         if ASYNC_AVAILABLE and use_async:
-            return await discover_metagraphs_async(production_only=production)
+            # Get all metagraphs first, then filter if needed
+            metagraphs = await discover_metagraphs_async()
+            if production and metagraphs:
+                # Filter for production metagraphs
+                return [mg for mg in metagraphs if mg.get('category') == 'production']
+            return metagraphs
         else:
             return sync_discover()
 

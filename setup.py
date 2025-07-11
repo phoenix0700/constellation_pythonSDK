@@ -12,7 +12,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="constellation-sdk",
-    version="1.0.0",
+    version="1.2.0",
     author="Constellation Network Community",
     author_email="community@constellationnetwork.io",
     description="Python SDK for Constellation Network (Hypergraph)",

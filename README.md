@@ -2,7 +2,7 @@
 
 **The complete Python SDK for building applications on the Constellation Network (Hypergraph)**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/constellation-network/python-sdk)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/constellation-network/python-sdk)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
 
@@ -28,7 +28,7 @@ The **Constellation Python SDK** is your complete toolkit for building on the Co
 
 **Why Constellation?** Unlike traditional blockchains that slow down as they grow, Constellation's Hypergraph gets **faster** with more users. No gas fees, no congestion, just pure scalability.
 
-## 🌟 **What's New in v1.1.0**
+## 🌟 **What's New in v1.2.0**
 
 ✅ **Complete Metagraph Support** - Build custom blockchain applications  
 ✅ **Centralized Transaction Architecture** - Clean separation of concerns with unified API  
@@ -37,7 +37,7 @@ The **Constellation Python SDK** is your complete toolkit for building on the Co
 ✅ **Token & Data Transactions** - Full support for custom tokens and data storage  
 ✅ **Comprehensive Documentation** - Complete guides and real-world examples
 
-### 🏗️ **New Architecture (v1.1.0)**
+### 🏗️ **New Architecture (v1.2.0)**
 
 The SDK now features a clean, maintainable architecture:
 
@@ -810,7 +810,7 @@ if __name__ == '__main__':
 
 ## 🏗️ Architecture & Migration Guide
 
-### New Centralized Transaction Architecture (v1.1.0)
+### New Centralized Transaction Architecture (v1.2.0)
 
 The SDK has been refactored for better maintainability and consistency:
 

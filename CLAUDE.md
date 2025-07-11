@@ -46,6 +46,12 @@ make lint
 # Format code (black)
 make format
 
+# Additional quality checks (CI/CD uses these)
+isort --check-only constellation_sdk/ tests/ examples/
+black --check constellation_sdk/ tests/ examples/
+mypy constellation_sdk/ --ignore-missing-imports --no-strict-optional
+pylint constellation_sdk/ --exit-zero
+
 # Clean build artifacts
 make clean
 ```
@@ -142,6 +148,15 @@ Each network has specific endpoints for:
 
 TestNet funding is required for transaction submission testing. Contact the Constellation community (Discord/Telegram) for TestNet tokens.
 
+### CI/CD Testing
+The project uses GitHub Actions with extensive test coverage:
+- **Unit Tests**: Run on Python 3.8-3.12 across Ubuntu, Windows, macOS
+- **Integration Tests**: Test network connectivity on TestNet and IntegrationNet
+- **Async Tests**: Verify async functionality when aiohttp is available
+- **CLI Tests**: Validate command-line interface functionality
+- **Security Scans**: Run safety, bandit, and pip-audit for vulnerability checks
+- **Code Quality**: Multiple linting, formatting, and complexity checks
+
 ## File Structure
 
 ```
@@ -227,6 +242,10 @@ Development dependencies (installed via `make dev-install`):
 - `black` - Code formatting
 - `flake8` - Linting
 - `mypy` - Type checking
+- `isort` - Import sorting
+- `pylint` - Additional linting
+- `safety` - Security vulnerability scanning
+- `bandit` - Security linter
 
 ### Async Support
 The SDK includes optional async support. If `aiohttp` is not installed, async components will be disabled:

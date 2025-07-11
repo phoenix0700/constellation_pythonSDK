@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: constellation-sdk
-Version: 1.0.0
+Version: 1.2.0
 Summary: Python SDK for Constellation Network (Hypergraph)
 Home-page: https://github.com/constellation-network/python-sdk
 Author: Constellation Network Community
@@ -27,6 +27,7 @@ Requires-Dist: requests>=2.28.0
 Requires-Dist: cryptography>=3.4.8
 Requires-Dist: base58>=2.1.0
 Requires-Dist: aiohttp>=3.8.0
+Requires-Dist: click>=8.0.0
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier
@@ -43,7 +44,7 @@ Dynamic: summary
 
 **The complete Python SDK for building applications on the Constellation Network (Hypergraph)**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/constellation-network/python-sdk)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/constellation-network/python-sdk)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
 
@@ -69,7 +70,7 @@ The **Constellation Python SDK** is your complete toolkit for building on the Co
 
 **Why Constellation?** Unlike traditional blockchains that slow down as they grow, Constellation's Hypergraph gets **faster** with more users. No gas fees, no congestion, just pure scalability.
 
-## 🌟 **What's New in v1.1.0**
+## 🌟 **What's New in v1.2.0**
 
 ✅ **Complete Metagraph Support** - Build custom blockchain applications  
 ✅ **Centralized Transaction Architecture** - Clean separation of concerns with unified API  
@@ -78,7 +79,7 @@ The **Constellation Python SDK** is your complete toolkit for building on the Co
 ✅ **Token & Data Transactions** - Full support for custom tokens and data storage  
 ✅ **Comprehensive Documentation** - Complete guides and real-world examples
 
-### 🏗️ **New Architecture (v1.1.0)**
+### 🏗️ **New Architecture (v1.2.0)**
 
 The SDK now features a clean, maintainable architecture:
 
@@ -273,7 +274,12 @@ except Exception as e:
 
 ---
 
-## 📖 Documentation & Examples
+## 📖 Documentation
+
+### 🚀 **Getting Started**
+- **[Quick Start Guide](QUICK_START.md)** - Get up and running in minutes with practical examples
+- **[CLI Tool Documentation](#cli-tool)** - Command-line interface for easy SDK operations
+- **[Developer Guide](DEVELOPER_GUIDE.md)** - Advanced patterns, testing, and contribution guidelines
 
 ### 📚 **Comprehensive Guides**
 
@@ -846,7 +852,7 @@ if __name__ == '__main__':
 
 ## 🏗️ Architecture & Migration Guide
 
-### New Centralized Transaction Architecture (v1.1.0)
+### New Centralized Transaction Architecture (v1.2.0)
 
 The SDK has been refactored for better maintainability and consistency:
 
@@ -939,6 +945,97 @@ except TransactionError as e:
 # Size estimation and structure validation
 size = Transactions.estimate_transaction_size(tx_data)
 valid = Transactions.validate_transaction_structure(tx_data)
+```
+
+---
+
+## 🖥️ CLI Tool
+
+The Constellation SDK now includes a powerful command-line interface for easy interaction with the network.
+
+### Installation & Setup
+
+```bash
+# CLI is automatically available after SDK installation
+constellation --help
+
+# Create and save a default account for quick operations
+constellation account create --save-key
+
+# View current configuration
+constellation config show
+```
+
+### Common CLI Commands
+
+```bash
+# Account Management
+constellation account create                    # Create new account
+constellation account create --save-key         # Create and save as default
+constellation account info                      # Show default account info
+constellation account info DAG123...            # Show specific account info
+
+# Balance Operations  
+constellation balance DAG123YourAddress...      # Check specific balance
+constellation balance DAG123... --watch         # Watch for balance changes
+
+# Send Transactions
+constellation send 10.5 DAG456RecipientAddr...  # Send using default account
+constellation send 5.0 DAG789... --from-key your_private_key  # Send with specific key
+constellation send 1.0 DAG456... --dry-run      # Test transaction without sending
+
+# Network Information
+constellation network info                       # Get network status
+constellation network health                     # Check network health
+
+# Metagraph Operations
+constellation metagraph discover                 # Find all metagraphs
+constellation metagraph discover --production    # Production metagraphs only
+constellation metagraph discover --async         # Faster async discovery
+
+# Configuration
+constellation config show                        # Show all settings
+constellation config set default_network mainnet # Update configuration
+constellation config reset                       # Reset to defaults
+
+# Global Options
+constellation --network mainnet balance DAG...   # Use specific network
+constellation --output json account info         # JSON output format
+constellation -v network info                    # Verbose output
+```
+
+### CLI Configuration
+
+The CLI stores settings in `~/.constellation/cli-config.json`:
+
+```json
+{
+  "default_network": "testnet",
+  "default_private_key": "your_key_here",
+  "output_format": "pretty",
+  "async_enabled": true
+}
+```
+
+### Examples
+
+```bash
+# Quick portfolio check
+constellation account create --save-key
+constellation account info
+
+# Monitor account activity
+constellation balance DAG123... --watch
+
+# Send transaction with confirmation
+constellation send 10.0 DAG456RecipientAddr... --from-key your_key
+
+# Discover production metagraphs
+constellation metagraph discover --production --output json
+
+# Network monitoring
+constellation network health
+constellation network info --verbose
 ```
 
 ---
