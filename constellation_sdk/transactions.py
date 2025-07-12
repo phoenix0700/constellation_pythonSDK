@@ -458,7 +458,7 @@ class Transactions:
     ) -> Dict[str, Any]:
         """
         Simulate a DAG transfer transaction before creation.
-        
+
         Args:
             source: Source address
             destination: Destination address
@@ -467,10 +467,10 @@ class Transactions:
             fee: Transaction fee
             check_balance: Whether to check source balance
             detailed_analysis: Whether to include detailed analysis
-            
+
         Returns:
             Simulation result with validation status and analysis
-            
+
         Example:
             >>> from constellation_sdk import Network, Transactions
             >>> network = Network('testnet')
@@ -482,7 +482,7 @@ class Transactions:
         """
         # Import here to avoid circular imports
         from .simulation import TransactionSimulator
-        
+
         simulator = TransactionSimulator(network)
         return simulator.simulate_dag_transfer(
             source, destination, amount, fee, check_balance, detailed_analysis
@@ -500,7 +500,7 @@ class Transactions:
     ) -> Dict[str, Any]:
         """
         Simulate a token transfer transaction before creation.
-        
+
         Args:
             source: Source address
             destination: Destination address
@@ -509,10 +509,10 @@ class Transactions:
             network: Network instance for validation
             check_balance: Whether to check source balance
             detailed_analysis: Whether to include detailed analysis
-            
+
         Returns:
             Simulation result with validation status and analysis
-            
+
         Example:
             >>> result = Transactions.simulate_token_transfer(
             ...     'DAG123...', 'DAG456...', 1000000000, 'DAG789...', network
@@ -522,7 +522,7 @@ class Transactions:
         """
         # Import here to avoid circular imports
         from .simulation import TransactionSimulator
-        
+
         simulator = TransactionSimulator(network)
         return simulator.simulate_token_transfer(
             source, destination, amount, metagraph_id, check_balance, detailed_analysis
@@ -539,7 +539,7 @@ class Transactions:
     ) -> Dict[str, Any]:
         """
         Simulate a data submission transaction before creation.
-        
+
         Args:
             source: Source address
             data: Data payload to submit
@@ -547,10 +547,10 @@ class Transactions:
             network: Network instance for validation
             destination: Destination address (defaults to source)
             detailed_analysis: Whether to include detailed analysis
-            
+
         Returns:
             Simulation result with validation status and analysis
-            
+
         Example:
             >>> data = {'sensor': 'temperature', 'value': 25.7}
             >>> result = Transactions.simulate_data_submission(
@@ -561,7 +561,7 @@ class Transactions:
         """
         # Import here to avoid circular imports
         from .simulation import TransactionSimulator
-        
+
         simulator = TransactionSimulator(network)
         return simulator.simulate_data_submission(
             source, data, metagraph_id, destination, detailed_analysis
@@ -577,17 +577,17 @@ class Transactions:
     ) -> Dict[str, Any]:
         """
         Simulate batch transfer operations before creation.
-        
+
         Args:
             source: Source address for all transfers
             transfers: List of transfer specifications
             network: Network instance for validation
             check_balance: Whether to check source balance
             detailed_analysis: Whether to include detailed analysis
-            
+
         Returns:
             Batch simulation result with individual transaction analysis
-            
+
         Example:
             >>> transfers = [
             ...     {'destination': 'DAG123...', 'amount': 1000000},
@@ -601,7 +601,7 @@ class Transactions:
         """
         # Import here to avoid circular imports
         from .simulation import TransactionSimulator
-        
+
         simulator = TransactionSimulator(network)
         return simulator.simulate_batch_transfers(
             source, transfers, check_balance, detailed_analysis

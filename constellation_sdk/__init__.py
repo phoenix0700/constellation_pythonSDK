@@ -85,6 +85,19 @@ except ImportError:
     batch_get_balances_from_multiple_metagraphs = None
     ASYNC_AVAILABLE = False
 
+# Batch operations (Enhanced REST Phase 1)
+from .batch import (
+    BatchOperation,
+    BatchOperationType,
+    BatchResponse,
+    BatchResult,
+    BatchValidator,
+    batch_get_balances,
+    batch_get_ordinals,
+    batch_get_transactions,
+    create_batch_operation,
+)
+
 # Enhanced validation and error handling (Phase 1)
 from .exceptions import (
     AddressValidationError,
@@ -109,6 +122,13 @@ from .logging import (
     get_transaction_logger,
     log_operation,
 )
+
+# Transaction simulation (Phase 1)
+from .simulation import (
+    TransactionSimulator,
+    estimate_transaction_cost,
+    simulate_transaction,
+)
 from .validation import (
     AddressValidator,
     AmountValidator,
@@ -120,39 +140,19 @@ from .validation import (
     is_valid_metagraph_id,
 )
 
-# Transaction simulation (Phase 1)
-from .simulation import (
-    TransactionSimulator,
-    estimate_transaction_cost,
-    simulate_transaction,
-)
-
-# Batch operations (Enhanced REST Phase 1)
-from .batch import (
-    BatchOperation,
-    BatchOperationType,
-    BatchResult,
-    BatchResponse,
-    BatchValidator,
-    create_batch_operation,
-    batch_get_balances,
-    batch_get_transactions,
-    batch_get_ordinals,
-)
-
 # Real-time event streaming (Phase 3)
 try:
     from .streaming import (
-        NetworkEventStream,
         BalanceTracker,
-        EventType,
-        StreamEvent,
         EventFilter,
+        EventType,
+        NetworkEventStream,
+        StreamEvent,
         create_event_stream,
-        stream_transactions,
         stream_balance_changes,
+        stream_transactions,
     )
-    
+
     STREAMING_AVAILABLE = True
 except ImportError:
     # WebSocket dependencies not available
@@ -169,11 +169,11 @@ except ImportError:
 # GraphQL API support (Phase 4)
 try:
     from .graphql import (
+        ConstellationSchema,
         GraphQLClient,
+        GraphQLOperationType,
         GraphQLQuery,
         GraphQLResponse,
-        GraphQLOperationType,
-        ConstellationSchema,
         execute_query,
         execute_query_async,
         get_account_portfolio,
@@ -184,13 +184,13 @@ try:
         QueryBuilder,
         SubscriptionBuilder,
         build_account_query,
+        build_balance_subscription,
         build_metagraph_query,
         build_network_status_query,
         build_portfolio_query,
         build_transaction_subscription,
-        build_balance_subscription,
     )
-    
+
     GRAPHQL_AVAILABLE = True
 except ImportError:
     # GraphQL dependencies not available

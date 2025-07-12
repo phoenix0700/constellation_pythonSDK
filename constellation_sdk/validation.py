@@ -182,10 +182,12 @@ class MetagraphIdValidator:
 
     # Base58 alphabet (Bitcoin-style, excludes 0, O, I, l for readability)
     BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-    
+
     # Patterns for different formats
     HEX_PATTERN = re.compile(r"^DAG[0-9A-Fa-f]{35}$")  # 38 chars total
-    BASE58_PATTERN = re.compile(r"^DAG[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{37}$")  # 40 chars total
+    BASE58_PATTERN = re.compile(
+        r"^DAG[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{37}$"
+    )  # 40 chars total
 
     @classmethod
     def validate(cls, metagraph_id: str) -> None:
@@ -228,7 +230,8 @@ class MetagraphIdValidator:
                 )
         else:
             raise MetagraphIdValidationError(
-                metagraph_id, f"Metagraph ID must be 38 or 40 characters, got {len(metagraph_id)}"
+                metagraph_id,
+                f"Metagraph ID must be 38 or 40 characters, got {len(metagraph_id)}",
             )
 
 

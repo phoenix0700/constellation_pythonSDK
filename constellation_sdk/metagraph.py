@@ -19,8 +19,13 @@ from .network import NetworkError
 
 # GraphQL integration (optional)
 try:
-    from .graphql import GraphQLClient, ConstellationSchema
-    from .graphql_builder import QueryBuilder, build_metagraph_query, build_portfolio_query
+    from .graphql import ConstellationSchema, GraphQLClient
+    from .graphql_builder import (
+        QueryBuilder,
+        build_metagraph_query,
+        build_portfolio_query,
+    )
+
     GRAPHQL_AVAILABLE = True
 except ImportError:
     GRAPHQL_AVAILABLE = False
@@ -88,7 +93,7 @@ class MetagraphClient:
 
         self.network = network
         self.base_url = f"https://be-{network}.constellationnetwork.io"
-        
+
         # Initialize GraphQL client if available
         if GRAPHQL_AVAILABLE:
             self.graphql_client = GraphQLClient(network)
@@ -534,20 +539,25 @@ class MetagraphClient:
         return summary
 
     # Helper methods for transaction creation moved to transactions.py module
-    
+
     # GraphQL-powered methods (enhanced functionality)
-    def get_comprehensive_metagraph_data(self, metagraph_id: str, include_holders: bool = True, include_transactions: bool = True) -> Dict[str, Any]:
+    def get_comprehensive_metagraph_data(
+        self,
+        metagraph_id: str,
+        include_holders: bool = True,
+        include_transactions: bool = True,
+    ) -> Dict[str, Any]:
         """
         Get comprehensive metagraph data using GraphQL (if available).
-        
+
         Args:
             metagraph_id: Metagraph ID
             include_holders: Whether to include holder information
             include_transactions: Whether to include transaction history
-            
+
         Returns:
             Comprehensive metagraph data dictionary
-            
+
         Example:
             >>> client = MetagraphClient('mainnet')
             >>> data = client.get_comprehensive_metagraph_data('DAG7Ghth...')
@@ -557,54 +567,66 @@ class MetagraphClient:
         """
         if not GRAPHQL_AVAILABLE or not self.graphql_client:
             # Fallback to REST API
-            return self._get_comprehensive_metagraph_data_rest(metagraph_id, include_holders, include_transactions)
-        
+            return self._get_comprehensive_metagraph_data_rest(
+                metagraph_id, include_holders, include_transactions
+            )
+
         try:
             # Use GraphQL for rich data
-            query = build_metagraph_query(metagraph_id, include_holders, include_transactions)
+            query = build_metagraph_query(
+                metagraph_id, include_holders, include_transactions
+            )
             response = self.graphql_client.execute(query)
-            
+
             if response.is_successful and response.data:
-                return response.data.get('metagraph', {})
+                return response.data.get("metagraph", {})
             else:
                 # Fallback to REST on GraphQL failure
-                return self._get_comprehensive_metagraph_data_rest(metagraph_id, include_holders, include_transactions)
-                
+                return self._get_comprehensive_metagraph_data_rest(
+                    metagraph_id, include_holders, include_transactions
+                )
+
         except Exception as e:
             # Fallback to REST on any error
-            return self._get_comprehensive_metagraph_data_rest(metagraph_id, include_holders, include_transactions)
-    
-    def _get_comprehensive_metagraph_data_rest(self, metagraph_id: str, include_holders: bool, include_transactions: bool) -> Dict[str, Any]:
+            return self._get_comprehensive_metagraph_data_rest(
+                metagraph_id, include_holders, include_transactions
+            )
+
+    def _get_comprehensive_metagraph_data_rest(
+        self, metagraph_id: str, include_holders: bool, include_transactions: bool
+    ) -> Dict[str, Any]:
         """Fallback REST implementation for comprehensive metagraph data."""
         try:
             # Get basic info
             info = self.get_metagraph_info(metagraph_id)
-            
+
             # Add additional data if requested
             if include_holders:
                 # This would require additional REST endpoints
-                info['holders'] = []
-            
+                info["holders"] = []
+
             if include_transactions:
                 # This would require additional REST endpoints
-                info['transactions'] = []
-            
+                info["transactions"] = []
+
             return info
-            
+
         except Exception as e:
             raise MetagraphError(f"Error getting comprehensive metagraph data: {e}")
-    
-    def get_account_portfolio_graphql(self, address: str, include_metagraph_balances: bool = True) -> Dict[str, Any]:
+
+    def get_account_portfolio_graphql(
+        self, address: str, include_metagraph_balances: bool = True
+    ) -> Dict[str, Any]:
         """
         Get comprehensive account portfolio using GraphQL (if available).
-        
+
         Args:
             address: Account address
             include_metagraph_balances: Whether to include metagraph balances
-            
+
         Returns:
             Account portfolio data dictionary
-            
+
         Example:
             >>> client = MetagraphClient('mainnet')
             >>> portfolio = client.get_account_portfolio_graphql('DAG4J6gix...')
@@ -612,39 +634,41 @@ class MetagraphClient:
             >>> print(f"Metagraph Balances: {len(portfolio['metagraphBalances'])}")
         """
         if not GRAPHQL_AVAILABLE or not self.graphql_client:
-            raise ConstellationError("GraphQL functionality not available. Install required dependencies.")
-        
+            raise ConstellationError(
+                "GraphQL functionality not available. Install required dependencies."
+            )
+
         try:
             # Build comprehensive account query
             builder = QueryBuilder().account(address).with_balance().with_address()
-            
+
             if include_metagraph_balances:
                 builder = builder.with_metagraph_balances()
-            
+
             # Add recent transactions
             builder = builder.with_transactions(limit=20)
-            
+
             query = builder.build()
             response = self.graphql_client.execute(query)
-            
+
             if response.is_successful and response.data:
-                return response.data.get('account', {})
+                return response.data.get("account", {})
             else:
                 raise MetagraphError(f"GraphQL query failed: {response.errors}")
-                
+
         except Exception as e:
             raise MetagraphError(f"Error getting account portfolio: {e}")
-    
+
     def get_multi_account_portfolio(self, addresses: List[str]) -> Dict[str, Any]:
         """
         Get portfolio data for multiple accounts using GraphQL (if available).
-        
+
         Args:
             addresses: List of account addresses
-            
+
         Returns:
             Multi-account portfolio data dictionary
-            
+
         Example:
             >>> client = MetagraphClient('mainnet')
             >>> portfolios = client.get_multi_account_portfolio(['DAG123...', 'DAG456...'])
@@ -652,32 +676,36 @@ class MetagraphClient:
             ...     print(f"{account['address']}: {account['balance']} DAG")
         """
         if not GRAPHQL_AVAILABLE or not self.graphql_client:
-            raise ConstellationError("GraphQL functionality not available. Install required dependencies.")
-        
+            raise ConstellationError(
+                "GraphQL functionality not available. Install required dependencies."
+            )
+
         try:
             # Build multi-account query
             query = build_portfolio_query(addresses)
             response = self.graphql_client.execute(query)
-            
+
             if response.is_successful and response.data:
                 return response.data
             else:
                 raise MetagraphError(f"GraphQL query failed: {response.errors}")
-                
+
         except Exception as e:
             raise MetagraphError(f"Error getting multi-account portfolio: {e}")
-    
-    def discover_metagraphs_graphql(self, production_only: bool = True, include_metrics: bool = True) -> List[Dict[str, Any]]:
+
+    def discover_metagraphs_graphql(
+        self, production_only: bool = True, include_metrics: bool = True
+    ) -> List[Dict[str, Any]]:
         """
         Discover metagraphs using GraphQL (if available) for enhanced data.
-        
+
         Args:
             production_only: Whether to include only production metagraphs
             include_metrics: Whether to include metrics like holder count, transaction count
-            
+
         Returns:
             List of metagraph data dictionaries with enhanced information
-            
+
         Example:
             >>> client = MetagraphClient('mainnet')
             >>> metagraphs = client.discover_metagraphs_graphql()
@@ -686,39 +714,53 @@ class MetagraphClient:
         """
         if not GRAPHQL_AVAILABLE or not self.graphql_client:
             # Fallback to REST discovery
-            return self.discover_production_metagraphs() if production_only else self.discover_metagraphs()
-        
+            return (
+                self.discover_production_metagraphs()
+                if production_only
+                else self.discover_metagraphs()
+            )
+
         try:
             # Build metagraphs query
             builder = QueryBuilder().metagraphs().with_basic_info()
-            
+
             if production_only:
                 builder = builder.production_only()
-            
+
             if include_metrics:
                 builder = builder.with_metrics()
-            
+
             query = builder.build()
             response = self.graphql_client.execute(query)
-            
+
             if response.is_successful and response.data:
-                return response.data.get('metagraphs', [])
+                return response.data.get("metagraphs", [])
             else:
                 # Fallback to REST on GraphQL failure
-                return self.discover_production_metagraphs() if production_only else self.discover_metagraphs()
-                
+                return (
+                    self.discover_production_metagraphs()
+                    if production_only
+                    else self.discover_metagraphs()
+                )
+
         except Exception as e:
             # Fallback to REST on any error
-            return self.discover_production_metagraphs() if production_only else self.discover_metagraphs()
-    
-    async def subscribe_to_metagraph_updates(self, metagraph_ids: List[str], callback=None):
+            return (
+                self.discover_production_metagraphs()
+                if production_only
+                else self.discover_metagraphs()
+            )
+
+    async def subscribe_to_metagraph_updates(
+        self, metagraph_ids: List[str], callback=None
+    ):
         """
         Subscribe to real-time metagraph updates using GraphQL subscriptions (if available).
-        
+
         Args:
             metagraph_ids: List of metagraph IDs to monitor
             callback: Optional callback function for updates
-            
+
         Example:
             >>> client = MetagraphClient('mainnet')
             >>> def handle_update(update):
@@ -726,39 +768,42 @@ class MetagraphClient:
             >>> await client.subscribe_to_metagraph_updates(['DAG123...'], handle_update)
         """
         if not GRAPHQL_AVAILABLE or not self.graphql_client:
-            raise ConstellationError("GraphQL functionality not available. Install required dependencies.")
-        
+            raise ConstellationError(
+                "GraphQL functionality not available. Install required dependencies."
+            )
+
         try:
             # Build subscription
             from .graphql_builder import SubscriptionBuilder
-            subscription = (SubscriptionBuilder()
-                           .metagraph_updates(metagraph_ids)
-                           .build())
-            
+
+            subscription = (
+                SubscriptionBuilder().metagraph_updates(metagraph_ids).build()
+            )
+
             # Subscribe to updates
             async for update in self.graphql_client.subscribe(subscription):
                 if callback:
                     callback(update.data)
                 else:
                     print(f"Metagraph update: {update.data}")
-                    
+
         except Exception as e:
             raise MetagraphError(f"Error subscribing to metagraph updates: {e}")
-    
+
     def get_graphql_stats(self) -> Dict[str, Any]:
         """
         Get GraphQL client statistics (if available).
-        
+
         Returns:
             GraphQL statistics dictionary
         """
         if not GRAPHQL_AVAILABLE or not self.graphql_client:
-            return {"available": False, "message": "GraphQL functionality not available"}
-        
-        return {
-            "available": True,
-            "stats": self.graphql_client.get_stats()
-        }
+            return {
+                "available": False,
+                "message": "GraphQL functionality not available",
+            }
+
+        return {"available": True, "stats": self.graphql_client.get_stats()}
 
 
 # Convenience functions for quick access

@@ -148,8 +148,12 @@ def demonstrate_new_architecture():
             data_submissions=mixed_batch[1:],  # Second item (data)
         )
 
-        print(f"   📦 Token batch: {len(token_batch.get('token_transfers', []))} transactions")
-        print(f"   📦 Data batch: {len(data_batch.get('data_submissions', []))} transactions")
+        print(
+            f"   📦 Token batch: {len(token_batch.get('token_transfers', []))} transactions"
+        )
+        print(
+            f"   📦 Data batch: {len(data_batch.get('data_submissions', []))} transactions"
+        )
         print(f"   🎯 Flexible batching for different transaction types")
 
     # ====================

@@ -27,13 +27,13 @@ except ImportError:
 from .batch import (
     BatchOperation,
     BatchOperationType,
-    BatchResult,
     BatchResponse,
+    BatchResult,
     BatchValidator,
-    create_batch_operation,
     batch_get_balances,
-    batch_get_transactions,
     batch_get_ordinals,
+    batch_get_transactions,
+    create_batch_operation,
 )
 from .config import AsyncConfig, NetworkConfig, get_config
 from .exceptions import (
@@ -522,20 +522,20 @@ class AsyncNetwork:
     async def batch_request(self, operations: List[BatchOperation]) -> BatchResponse:
         """
         Execute multiple operations in a single batch request asynchronously.
-        
+
         This method provides enhanced REST capabilities by executing multiple
         operations efficiently and concurrently, providing superior performance
         compared to the synchronous batch_request method.
-        
+
         Args:
             operations: List of batch operations to execute
-            
+
         Returns:
             BatchResponse containing results of all operations
-            
+
         Raises:
             NetworkError: If validation fails or network issues occur
-            
+
         Example:
             >>> operations = [
             ...     create_batch_operation('get_balance', {'address': 'DAG123...'}),
@@ -546,37 +546,45 @@ class AsyncNetwork:
             >>> print(f"Success rate: {response.success_rate()}%")
         """
         start_time = time.time()
-        
+
         # Validate batch operations
         validation_errors = BatchValidator.validate_batch(operations)
         if validation_errors:
-            raise NetworkError(f"Batch validation failed: {'; '.join(validation_errors)}")
-        
+            raise NetworkError(
+                f"Batch validation failed: {'; '.join(validation_errors)}"
+            )
+
         # Create concurrent tasks for all operations
-        tasks = [self._execute_single_operation_async(operation) for operation in operations]
-        
+        tasks = [
+            self._execute_single_operation_async(operation) for operation in operations
+        ]
+
         try:
             # Execute all operations concurrently
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             # Process results
             batch_results = []
             for operation, result in zip(operations, results):
                 if isinstance(result, Exception):
-                    batch_results.append(BatchResult(
-                        operation=operation.operation,
-                        success=False,
-                        error=str(result),
-                        id=operation.id
-                    ))
+                    batch_results.append(
+                        BatchResult(
+                            operation=operation.operation,
+                            success=False,
+                            error=str(result),
+                            id=operation.id,
+                        )
+                    )
                 else:
-                    batch_results.append(BatchResult(
-                        operation=operation.operation,
-                        success=True,
-                        data=result,
-                        id=operation.id
-                    ))
-            
+                    batch_results.append(
+                        BatchResult(
+                            operation=operation.operation,
+                            success=True,
+                            data=result,
+                            id=operation.id,
+                        )
+                    )
+
         except Exception as e:
             # If gather itself fails, create error results for all operations
             batch_results = [
@@ -584,89 +592,87 @@ class AsyncNetwork:
                     operation=operation.operation,
                     success=False,
                     error=str(e),
-                    id=operation.id
+                    id=operation.id,
                 )
                 for operation in operations
             ]
-        
+
         execution_time = time.time() - start_time
-        
+
         # Create summary statistics
         successful_ops = [r for r in batch_results if r.success]
         failed_ops = [r for r in batch_results if not r.success]
-        
+
         summary = {
-            'total_operations': len(operations),
-            'successful_operations': len(successful_ops),
-            'failed_operations': len(failed_ops),
-            'success_rate': len(successful_ops) / len(operations) * 100,
-            'execution_time': execution_time,
-            'concurrent_execution': True
+            "total_operations": len(operations),
+            "successful_operations": len(successful_ops),
+            "failed_operations": len(failed_ops),
+            "success_rate": len(successful_ops) / len(operations) * 100,
+            "execution_time": execution_time,
+            "concurrent_execution": True,
         }
-        
+
         return BatchResponse(
-            results=batch_results,
-            summary=summary,
-            execution_time=execution_time
+            results=batch_results, summary=summary, execution_time=execution_time
         )
 
     async def _execute_single_operation_async(self, operation: BatchOperation) -> Any:
         """
         Execute a single batch operation asynchronously.
-        
+
         Args:
             operation: Batch operation to execute
-            
+
         Returns:
             Operation result
-            
+
         Raises:
             NetworkError: If operation fails
         """
         if operation.operation == BatchOperationType.GET_BALANCE:
-            return await self.get_balance(operation.params['address'])
-        
+            return await self.get_balance(operation.params["address"])
+
         elif operation.operation == BatchOperationType.GET_ORDINAL:
-            return await self.get_ordinal(operation.params['address'])
-        
+            return await self.get_ordinal(operation.params["address"])
+
         elif operation.operation == BatchOperationType.GET_TRANSACTIONS:
-            address = operation.params['address']
-            limit = operation.params.get('limit', 10)
+            address = operation.params["address"]
+            limit = operation.params.get("limit", 10)
             return await self.get_transactions(address, limit)
-        
+
         elif operation.operation == BatchOperationType.GET_RECENT_TRANSACTIONS:
-            limit = operation.params.get('limit', 50)
+            limit = operation.params.get("limit", 50)
             return await self.get_recent_transactions(limit)
-        
+
         elif operation.operation == BatchOperationType.GET_NODE_INFO:
             return await self.get_node_info()
-        
+
         elif operation.operation == BatchOperationType.GET_CLUSTER_INFO:
             return await self.get_cluster_info()
-        
+
         elif operation.operation == BatchOperationType.SUBMIT_TRANSACTION:
-            return await self.submit_transaction(operation.params['transaction'])
-        
+            return await self.submit_transaction(operation.params["transaction"])
+
         else:
             raise NetworkError(f"Unsupported batch operation: {operation.operation}")
 
     async def get_multi_balance_enhanced(self, addresses: List[str]) -> Dict[str, int]:
         """
         Get balances for multiple addresses using enhanced batch operations.
-        
+
         This method uses the new batch operations system and provides better
         error handling and performance tracking compared to the existing
         batch_get_balances method.
-        
+
         Args:
             addresses: List of DAG addresses
-            
+
         Returns:
             Dictionary mapping addresses to balances
         """
         operations = batch_get_balances(addresses)
         response = await self.batch_request(operations)
-        
+
         result = {}
         for i, address in enumerate(addresses):
             operation_result = response.get_result(f"balance_{i}")
@@ -679,22 +685,22 @@ class AsyncNetwork:
                     result[address] = balance_data
             else:
                 result[address] = 0  # Default to 0 if operation failed
-        
+
         return result
 
     async def get_multi_ordinal(self, addresses: List[str]) -> Dict[str, int]:
         """
         Get ordinals for multiple addresses in a single batch request.
-        
+
         Args:
             addresses: List of DAG addresses
-            
+
         Returns:
             Dictionary mapping addresses to ordinals
         """
         operations = batch_get_ordinals(addresses)
         response = await self.batch_request(operations)
-        
+
         result = {}
         for i, address in enumerate(addresses):
             operation_result = response.get_result(f"ordinal_{i}")
@@ -702,27 +708,25 @@ class AsyncNetwork:
                 result[address] = operation_result.data
             else:
                 result[address] = 0  # Default to 0 if operation failed
-        
+
         return result
 
     async def get_multi_transactions(
-        self, 
-        addresses: List[str], 
-        limit: int = 10
+        self, addresses: List[str], limit: int = 10
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Get transactions for multiple addresses in a single batch request.
-        
+
         Args:
             addresses: List of DAG addresses
             limit: Maximum number of transactions per address
-            
+
         Returns:
             Dictionary mapping addresses to transaction lists
         """
         operations = batch_get_transactions(addresses, limit)
         response = await self.batch_request(operations)
-        
+
         result = {}
         for i, address in enumerate(addresses):
             operation_result = response.get_result(f"transactions_{i}")
@@ -730,32 +734,34 @@ class AsyncNetwork:
                 result[address] = operation_result.data
             else:
                 result[address] = []  # Default to empty list if operation failed
-        
+
         return result
 
     async def get_address_overview(self, address: str) -> Dict[str, Any]:
         """
         Get comprehensive address overview in a single batch request.
-        
+
         Args:
             address: DAG address
-            
+
         Returns:
             Dictionary with balance, ordinal, and recent transactions
         """
         operations = [
-            create_batch_operation('get_balance', {'address': address}, 'balance'),
-            create_batch_operation('get_ordinal', {'address': address}, 'ordinal'),
-            create_batch_operation('get_transactions', {'address': address, 'limit': 10}, 'transactions')
+            create_batch_operation("get_balance", {"address": address}, "balance"),
+            create_batch_operation("get_ordinal", {"address": address}, "ordinal"),
+            create_batch_operation(
+                "get_transactions", {"address": address, "limit": 10}, "transactions"
+            ),
         ]
-        
+
         response = await self.batch_request(operations)
-        
+
         # Extract results
-        balance_result = response.get_result('balance')
-        ordinal_result = response.get_result('ordinal')
-        transactions_result = response.get_result('transactions')
-        
+        balance_result = response.get_result("balance")
+        ordinal_result = response.get_result("ordinal")
+        transactions_result = response.get_result("transactions")
+
         # Extract balance from response data
         balance_value = 0
         if balance_result and balance_result.success:
@@ -764,34 +770,40 @@ class AsyncNetwork:
                 balance_value = balance_data.get("data", {}).get("balance", 0)
             else:
                 balance_value = balance_data
-        
+
         return {
-            'address': address,
-            'balance': balance_value,
-            'ordinal': ordinal_result.data if ordinal_result and ordinal_result.success else 0,
-            'transactions': transactions_result.data if transactions_result and transactions_result.success else [],
-            'success': response.success_rate() == 100,
-            'execution_time': response.execution_time
+            "address": address,
+            "balance": balance_value,
+            "ordinal": (
+                ordinal_result.data if ordinal_result and ordinal_result.success else 0
+            ),
+            "transactions": (
+                transactions_result.data
+                if transactions_result and transactions_result.success
+                else []
+            ),
+            "success": response.success_rate() == 100,
+            "execution_time": response.execution_time,
         }
 
     async def get_ordinal(self, address: str) -> int:
         """
         Get address ordinal (transaction count) asynchronously.
-        
+
         Args:
             address: DAG address
-            
+
         Returns:
             Address ordinal (transaction count)
         """
         cache_key = self._get_cache_key(f"/addresses/{address}/ordinal")
-        
+
         if self._is_cache_valid(cache_key):
             self.logger.logger.debug(f"Returning cached ordinal for {address}")
             return self._cache[cache_key]
-        
+
         url = urljoin(self.config.be_url, f"/addresses/{address}/ordinal")
-        
+
         try:
             response = await self.http_client.request("GET", url, self.config)
             ordinal = response.get("data", {}).get("ordinal", 0)
@@ -801,27 +813,33 @@ class AsyncNetwork:
             self.logger.logger.warning(f"Failed to get ordinal for {address}: {e}")
             return 0  # Default to 0 if operation failed
 
-    async def get_transactions(self, address: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_transactions(
+        self, address: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Get transactions for a specific address asynchronously.
-        
+
         Args:
             address: DAG address
             limit: Maximum number of transactions to return
-            
+
         Returns:
             List of transaction data
         """
-        cache_key = self._get_cache_key(f"/addresses/{address}/transactions", {"limit": limit})
-        
+        cache_key = self._get_cache_key(
+            f"/addresses/{address}/transactions", {"limit": limit}
+        )
+
         if self._is_cache_valid(cache_key):
             self.logger.logger.debug(f"Returning cached transactions for {address}")
             return self._cache[cache_key]
-        
+
         url = urljoin(self.config.be_url, f"/addresses/{address}/transactions")
-        
+
         try:
-            response = await self.http_client.request("GET", url, self.config, params={"limit": limit})
+            response = await self.http_client.request(
+                "GET", url, self.config, params={"limit": limit}
+            )
             transactions = response.get("data", [])
             self._cache_response(cache_key, transactions)
             return transactions
@@ -832,23 +850,25 @@ class AsyncNetwork:
     async def get_recent_transactions(self, limit: int = 50) -> List[Dict[str, Any]]:
         """
         Get recent transactions from the network asynchronously.
-        
+
         Args:
             limit: Maximum number of transactions to return
-            
+
         Returns:
             List of transaction data
         """
         cache_key = self._get_cache_key("/transactions", {"limit": limit})
-        
+
         if self._is_cache_valid(cache_key):
             self.logger.logger.debug("Returning cached recent transactions")
             return self._cache[cache_key]
-        
+
         url = urljoin(self.config.be_url, "/transactions")
-        
+
         try:
-            response = await self.http_client.request("GET", url, self.config, params={"limit": limit})
+            response = await self.http_client.request(
+                "GET", url, self.config, params={"limit": limit}
+            )
             transactions = response.get("data", [])
             self._cache_response(cache_key, transactions)
             return transactions
@@ -859,18 +879,18 @@ class AsyncNetwork:
     async def get_cluster_info(self) -> List[Dict[str, Any]]:
         """
         Get cluster information asynchronously.
-        
+
         Returns:
             List of cluster node information
         """
         cache_key = self._get_cache_key("/cluster/info")
-        
+
         if self._is_cache_valid(cache_key):
             self.logger.logger.debug("Returning cached cluster info")
             return self._cache[cache_key]
-        
+
         url = urljoin(self.config.l0_url, "/cluster/info")
-        
+
         try:
             response = await self.http_client.request("GET", url, self.config)
             cluster_info = response.get("data", [])

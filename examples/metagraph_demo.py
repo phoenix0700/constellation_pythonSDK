@@ -118,14 +118,16 @@ def demo_token_transactions():
         print(f"✅ Standard transfer: 10 tokens")
         print(f"   Transaction keys: {list(signed_token_tx.keys())}")
         print(f"   Value keys: {list(signed_token_tx['value'].keys())}")
-        print(f"   Signature length: {len(signed_token_tx['proofs'][0]['signature'])} chars")
+        print(
+            f"   Signature length: {len(signed_token_tx['proofs'][0]['signature'])} chars"
+        )
 
         # Micro-transaction (fractional tokens)
         micro_tx = Transactions.create_token_transfer(
             source=sender.address,
             destination=recipient.address,
             amount=1000000,  # 0.01 tokens
-            metagraph_id=metagraph_id
+            metagraph_id=metagraph_id,
         )
         signed_micro_tx = sender.sign_metagraph_transaction(micro_tx)
 
@@ -136,7 +138,7 @@ def demo_token_transactions():
             source=sender.address,
             destination=recipient.address,
             amount=100000000000,  # 1000 tokens
-            metagraph_id=metagraph_id
+            metagraph_id=metagraph_id,
         )
         signed_large_tx = sender.sign_metagraph_transaction(large_tx)
 

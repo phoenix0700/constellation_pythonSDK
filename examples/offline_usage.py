@@ -60,6 +60,7 @@ def main():
 
     # Create sample transaction data using Transactions class
     from constellation_sdk import Transactions
+
     transaction_data = Transactions.create_dag_transfer(
         source=account.address,
         destination="DAG9a36ad52d8b6c67d7baa03397f4c90782a8",

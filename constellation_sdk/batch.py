@@ -6,8 +6,8 @@ in a single API call, improving performance and reducing network round trips.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 
 class BatchOperationType(Enum):
