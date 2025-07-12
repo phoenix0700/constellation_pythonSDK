@@ -4,6 +4,14 @@ This directory contains practical examples demonstrating how to use the Constell
 
 ## 📋 Available Examples
 
+### 🎓 **beginner_guide.py** (NEW!)
+**Best for:** Complete beginners to Constellation and blockchain  
+**Shows:** Complete walkthrough from installation to advanced features with explanations
+
+```bash
+python3 examples/beginner_guide.py
+```
+
 ### 🌟 **simple_metagraph_usage.py**
 **Best for:** Beginners and quick start  
 **Shows:** Basic metagraph operations, account creation, balance checking, transaction creation
@@ -46,10 +54,11 @@ python3 example_usage.py
 
 ## 🎯 Quick Start Guide
 
-1. **New to Constellation?** → Start with `simple_metagraph_usage.py`
-2. **Want to build DApps?** → Check `metagraph_demo.py` for all capabilities  
-3. **Need offline signing?** → Use `offline_usage.py`
-4. **Building production apps?** → Study `example_usage.py`
+1. **Complete beginner?** → Start with `beginner_guide.py` for full walkthrough
+2. **New to Constellation?** → Try `simple_metagraph_usage.py` for quick start
+3. **Want to build DApps?** → Check `metagraph_demo.py` for all capabilities  
+4. **Need offline signing?** → Use `offline_usage.py`
+5. **Building production apps?** → Study `example_usage.py`
 
 ## 🌐 Network Information
 

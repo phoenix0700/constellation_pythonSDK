@@ -1,2 +1,0 @@
-constellation_sdk
-tests

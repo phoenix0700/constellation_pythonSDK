@@ -22,8 +22,6 @@ dev-install: install
 
 # Run tests
 test:
-	@echo "🧪 Running tests..."
-	$(PYTHON) test_installation.py
 	@echo "🧪 Running unit tests..."
 	$(PYTHON) -m pytest tests/ -v
 

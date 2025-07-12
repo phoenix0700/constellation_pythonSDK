@@ -35,6 +35,7 @@ The **Constellation Python SDK** is your complete toolkit for building on the Co
 ✅ **Production-First Design** - Smart filtering separates real from test deployments  
 ✅ **Multi-Network Operations** - Seamless MainNet/TestNet/IntegrationNet support  
 ✅ **Token & Data Transactions** - Full support for custom tokens and data storage  
+✅ **Transaction Simulation** - Pre-flight validation and cost estimation to prevent failed transactions  
 ✅ **Comprehensive Documentation** - Complete guides and real-world examples
 
 ### 🏗️ **New Architecture (v1.2.0)**
@@ -42,9 +43,10 @@ The **Constellation Python SDK** is your complete toolkit for building on the Co
 The SDK now features a clean, maintainable architecture:
 
 - **`Account`** - Pure key management and transaction signing
-- **`Transactions`** - Centralized creation for all transaction types  
+- **`Transactions`** - Centralized creation for all transaction types with simulation  
 - **`MetagraphClient`** - Discovery and queries only
 - **`Network`** - Core DAG operations
+- **`TransactionSimulator`** - Pre-flight validation and cost estimation
 
 ---
 
@@ -230,6 +232,78 @@ except Exception as e:
 # - Clear separation of concerns
 ```
 
+### 5. Transaction Simulation (New!)
+
+Validate transactions before submitting to save TestNet funds and prevent failures:
+
+```python
+from constellation_sdk import Transactions, TransactionSimulator
+
+# 🔮 Simulate before creating transaction
+simulation = Transactions.simulate_dag_transfer(
+    source=alice.address,
+    destination=bob.address,
+    amount=100000000,
+    network=testnet,
+    detailed_analysis=True
+)
+
+print(f"Will succeed: {simulation['will_succeed']}")
+print(f"Success probability: {simulation['success_probability']:.1%}")
+print(f"Balance sufficient: {simulation['balance_sufficient']}")
+print(f"Estimated size: {simulation['estimated_size']} bytes")
+
+if simulation['validation_errors']:
+    print("❌ Validation errors:")
+    for error in simulation['validation_errors']:
+        print(f"  - {error}")
+
+# 📊 Detailed analysis
+if simulation.get('detailed_analysis'):
+    analysis = simulation['detailed_analysis']
+    print(f"Complexity: {analysis['transaction_complexity']}")
+    print(f"Processing time: {analysis['estimated_processing_time']}")
+    if analysis['optimization_suggestions']:
+        print("💡 Optimization suggestions:")
+        for suggestion in analysis['optimization_suggestions']:
+            print(f"  - {suggestion}")
+
+# ✅ Only create transaction if simulation succeeds
+if simulation['will_succeed']:
+    transaction_data = Transactions.create_dag_transfer(
+        source=alice.address,
+        destination=bob.address,
+        amount=100000000
+    )
+    signed_tx = alice.sign_transaction(transaction_data)
+    result = testnet.submit_transaction(signed_tx)
+    print("🎉 Transaction submitted successfully!")
+else:
+    print("❌ Transaction would fail - not submitting")
+
+# 📦 Batch simulation for multiple transactions
+batch_transfers = [
+    {"destination": bob.address, "amount": 50000000},  # DAG transfer
+    {"destination": alice.address, "amount": 1000000000, "metagraph_id": "DAG123..."},  # Token
+    {"data": {"sensor": "temperature", "value": 25.7}, "metagraph_id": "DAG123..."}  # Data
+]
+
+batch_simulation = Transactions.simulate_batch_transfer(
+    source=alice.address,
+    transfers=batch_transfers,
+    network=testnet
+)
+
+print(f"Batch success rate: {batch_simulation['successful_transfers']}/{batch_simulation['total_transfers']}")
+print(f"Total estimated size: {batch_simulation['total_size']} bytes")
+```
+
+**🎯 Simulation Benefits:**
+- **Save TestNet Funds** - Validate before spending test tokens
+- **Prevent Failed Transactions** - Catch errors early  
+- **Optimize Performance** - Get size and processing estimates
+- **Improve User Experience** - Clear feedback on transaction viability
+
 ---
 
 ## 📖 Documentation
@@ -254,6 +328,7 @@ Quick start with examples in the `examples/` directory:
 | `metagraph_demo.py` | Feature exploration | All metagraph capabilities |
 | `basic_usage.py` | Core SDK | Account & network operations |
 | `offline_usage.py` | Security | Offline transaction signing |
+| `transaction_simulation_demo.py` | Pre-flight validation | Transaction simulation and cost estimation |
 | `example_usage.py` | Production | Real-world integration patterns |
 
 ```bash
@@ -265,6 +340,9 @@ python3 examples/metagraph_demo.py
 
 # Test basic SDK functionality
 python3 examples/basic_usage.py
+
+# Learn transaction simulation (prevents failed transactions)
+python3 examples/transaction_simulation_demo.py
 ```
 
 ### 🏗️ **Real-World Applications** (New Architecture)
@@ -951,6 +1029,13 @@ constellation metagraph discover                 # Find all metagraphs
 constellation metagraph discover --production    # Production metagraphs only
 constellation metagraph discover --async         # Faster async discovery
 
+# Transaction Simulation (New!)
+constellation simulate dag <source> <dest> <amount>              # Simulate DAG transfer
+constellation simulate dag <source> <dest> <amount> --detailed   # With detailed analysis
+constellation simulate token <source> <dest> <amount> <mg_id>    # Simulate token transfer
+constellation simulate data <source> <mg_id> --data '{"key":"value"}' # Simulate data submission
+constellation simulate cost <source> <dest> <amount>             # Estimate transaction cost
+
 # Configuration
 constellation config show                        # Show all settings
 constellation config set default_network mainnet # Update configuration
@@ -994,6 +1079,10 @@ constellation metagraph discover --production --output json
 # Network monitoring
 constellation network health
 constellation network info --verbose
+
+# Transaction simulation (prevent failed transactions)
+constellation simulate dag DAG123... DAG456... 10.0 --detailed
+constellation simulate cost DAG123... DAG456... 5.0
 ```
 
 ---

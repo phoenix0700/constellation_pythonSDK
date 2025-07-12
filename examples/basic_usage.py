@@ -44,7 +44,7 @@ def main():
     print("\n5. 📝 Transaction Creation (New Architecture):")
     print("   📦 Step 1: Create transaction with Transactions class")
     transaction_data = Transactions.create_dag_transfer(
-        sender=alice,
+        source=alice.address,
         destination=bob.address,
         amount=100000000,  # 1 DAG in Datolites
         fee=0,

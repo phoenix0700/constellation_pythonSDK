@@ -21,18 +21,18 @@ def main():
     account = Account()
     print(f"✅ New Account Created")
     print(f"   Address: {account.address}")
-    print(f"   Public Key: {account.get_public_key_hex()}")
-    print(f"   Private Key: {account.get_private_key_hex()}")
+    print(f"   Public Key: {account.public_key_hex}")
+    print(f"   Private Key: {account.private_key_hex}")
 
     # Save account info
     account_info = {
         "address": account.address,
-        "private_key": account.get_private_key_hex(),
-        "public_key": account.get_public_key_hex(),
+        "private_key": account.private_key_hex,
+        "public_key": account.public_key_hex,
     }
 
     # Test loading from private key
-    loaded_account = Account.from_private_key(account_info["private_key"])
+    loaded_account = Account(account_info["private_key"])
     print(f"\n✅ Account Loaded from Private Key")
     print(f"   Original: {account.address}")
     print(f"   Loaded:   {loaded_account.address}")
@@ -49,30 +49,30 @@ def main():
     ]
 
     for i, message in enumerate(messages, 1):
-        signature = account.sign(message)
+        signature = account.sign_message(message)
         print(f"✅ Message {i} signed")
         print(f"   Message: {message}")
-        print(f"   Signature: {signature.hex()[:20]}... ({len(signature)} bytes)")
+        print(f"   Signature: {signature[:20]}... ({len(signature)} chars)")
 
     # Example 3: Transaction signing
     print("\n💸 Transaction Signing")
     print("-" * 30)
 
-    # Create sample transaction data
-    transaction_data = {
-        "source": account.address,
-        "destination": "DAGexampleRecipientAddress123",
-        "amount": 1000000000,  # 1 DAG in nano-DAG
-        "fee": 0,
-        "lastRef": "sample_last_ref_hash",
-    }
+    # Create sample transaction data using Transactions class
+    from constellation_sdk import Transactions
+    transaction_data = Transactions.create_dag_transfer(
+        source=account.address,
+        destination="DAG9a36ad52d8b6c67d7baa03397f4c90782a8",
+        amount=1000000000,  # 1 DAG in nano-DAG
+        fee=0,
+    )
 
-    tx_signature = account.sign_transaction(transaction_data)
+    signed_tx = account.sign_transaction(transaction_data)
     print(f"✅ Transaction Signed")
     print(f"   From: {transaction_data['source']}")
     print(f"   To: {transaction_data['destination']}")
     print(f"   Amount: {transaction_data['amount'] / 1_000_000_000} DAG")
-    print(f"   Signature: {tx_signature[:20]}...")
+    print(f"   Signed: {bool(signed_tx.get('proofs'))}")
 
     # Example 4: Multiple accounts
     print("\n👥 Multiple Accounts")
@@ -103,8 +103,8 @@ def main():
     # Export account
     exported_data = {
         "address": account.address,
-        "private_key": account.get_private_key_hex(),
-        "public_key": account.get_public_key_hex(),
+        "private_key": account.private_key_hex,
+        "public_key": account.public_key_hex,
         "created": "2024-01-01T00:00:00Z",
     }
 
@@ -112,7 +112,7 @@ def main():
     print(json.dumps(exported_data, indent=2))
 
     # Import account
-    imported_account = Account.from_private_key(exported_data["private_key"])
+    imported_account = Account(exported_data["private_key"])
     print(f"\n✅ Account imported successfully")
     print(f"   Matches original: {imported_account.address == account.address}")
 

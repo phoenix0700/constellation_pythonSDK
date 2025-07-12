@@ -49,7 +49,7 @@ def simple_metagraph_example():
         # 6. Create a token transaction (New Architecture)
         print("\n6. Creating token transaction with Transactions class...")
         token_tx = Transactions.create_token_transfer(
-            sender=alice,  # sender account
+            source=alice.address,  # sender address
             destination=bob.address,  # recipient address
             amount=1000000000,  # 10 tokens (assuming 8 decimals)
             metagraph_id=metagraph_id,
@@ -61,7 +61,7 @@ def simple_metagraph_example():
         # 7. Create a data transaction (New Architecture)
         print("\n7. Creating data transaction with Transactions class...")
         data_tx = Transactions.create_data_submission(
-            sender=alice,
+            source=alice.address,
             data={
                 "message": "Hello Constellation!",
                 "timestamp": "2024-01-15T10:30:00Z",
@@ -70,7 +70,7 @@ def simple_metagraph_example():
             metagraph_id=metagraph_id,
         )
         print(f"   ✅ Data transaction created and signed")
-        print(f"   Data keys: {list(data_tx['value']['data'].keys())}")
+        print(f"   Data keys: {list(data_tx['data'].keys())}")
         print(f"   🎯 Clean API: Transactions.create_data_submission()")
 
         print(f"\n🎉 Simple metagraph operations completed!")

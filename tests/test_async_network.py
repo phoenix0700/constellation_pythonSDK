@@ -122,10 +122,10 @@ class TestAsyncHTTPClient:
         assert client._request_count == 2
 
 
-@pytest.mark.asyncio
 class TestAsyncNetwork:
     """Test AsyncNetwork class."""
 
+    @pytest.mark.asyncio
     async def test_network_creation(self):
         """Test async network creation."""
         network_config = NetworkConfig(
@@ -143,6 +143,7 @@ class TestAsyncNetwork:
 
         await network.__aexit__(None, None, None)
 
+    @pytest.mark.asyncio
     async def test_context_manager(self):
         """Test async network as context manager."""
         network_config = NetworkConfig(

@@ -446,6 +446,167 @@ class Transactions:
 
         return True
 
+    @staticmethod
+    def simulate_dag_transfer(
+        source: str,
+        destination: str,
+        amount: Union[int, float],
+        network: Any,
+        fee: Union[int, float] = 0,
+        check_balance: bool = True,
+        detailed_analysis: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Simulate a DAG transfer transaction before creation.
+        
+        Args:
+            source: Source address
+            destination: Destination address
+            amount: Amount to transfer
+            network: Network instance for balance checking
+            fee: Transaction fee
+            check_balance: Whether to check source balance
+            detailed_analysis: Whether to include detailed analysis
+            
+        Returns:
+            Simulation result with validation status and analysis
+            
+        Example:
+            >>> from constellation_sdk import Network, Transactions
+            >>> network = Network('testnet')
+            >>> result = Transactions.simulate_dag_transfer(
+            ...     'DAG123...', 'DAG456...', 100000000, network
+            ... )
+            >>> if result['will_succeed']:
+            ...     tx = Transactions.create_dag_transfer(...)
+        """
+        # Import here to avoid circular imports
+        from .simulation import TransactionSimulator
+        
+        simulator = TransactionSimulator(network)
+        return simulator.simulate_dag_transfer(
+            source, destination, amount, fee, check_balance, detailed_analysis
+        )
+
+    @staticmethod
+    def simulate_token_transfer(
+        source: str,
+        destination: str,
+        amount: Union[int, float],
+        metagraph_id: str,
+        network: Any,
+        check_balance: bool = True,
+        detailed_analysis: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Simulate a token transfer transaction before creation.
+        
+        Args:
+            source: Source address
+            destination: Destination address
+            amount: Amount to transfer
+            metagraph_id: Metagraph ID
+            network: Network instance for validation
+            check_balance: Whether to check source balance
+            detailed_analysis: Whether to include detailed analysis
+            
+        Returns:
+            Simulation result with validation status and analysis
+            
+        Example:
+            >>> result = Transactions.simulate_token_transfer(
+            ...     'DAG123...', 'DAG456...', 1000000000, 'DAG789...', network
+            ... )
+            >>> if result['will_succeed']:
+            ...     tx = Transactions.create_token_transfer(...)
+        """
+        # Import here to avoid circular imports
+        from .simulation import TransactionSimulator
+        
+        simulator = TransactionSimulator(network)
+        return simulator.simulate_token_transfer(
+            source, destination, amount, metagraph_id, check_balance, detailed_analysis
+        )
+
+    @staticmethod
+    def simulate_data_submission(
+        source: str,
+        data: Dict[str, Any],
+        metagraph_id: str,
+        network: Any,
+        destination: Optional[str] = None,
+        detailed_analysis: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Simulate a data submission transaction before creation.
+        
+        Args:
+            source: Source address
+            data: Data payload to submit
+            metagraph_id: Metagraph ID
+            network: Network instance for validation
+            destination: Destination address (defaults to source)
+            detailed_analysis: Whether to include detailed analysis
+            
+        Returns:
+            Simulation result with validation status and analysis
+            
+        Example:
+            >>> data = {'sensor': 'temperature', 'value': 25.7}
+            >>> result = Transactions.simulate_data_submission(
+            ...     'DAG123...', data, 'DAG789...', network
+            ... )
+            >>> if result['will_succeed']:
+            ...     tx = Transactions.create_data_submission(...)
+        """
+        # Import here to avoid circular imports
+        from .simulation import TransactionSimulator
+        
+        simulator = TransactionSimulator(network)
+        return simulator.simulate_data_submission(
+            source, data, metagraph_id, destination, detailed_analysis
+        )
+
+    @staticmethod
+    def simulate_batch_transfer(
+        source: str,
+        transfers: List[Dict[str, Any]],
+        network: Any,
+        check_balance: bool = True,
+        detailed_analysis: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Simulate batch transfer operations before creation.
+        
+        Args:
+            source: Source address for all transfers
+            transfers: List of transfer specifications
+            network: Network instance for validation
+            check_balance: Whether to check source balance
+            detailed_analysis: Whether to include detailed analysis
+            
+        Returns:
+            Batch simulation result with individual transaction analysis
+            
+        Example:
+            >>> transfers = [
+            ...     {'destination': 'DAG123...', 'amount': 1000000},
+            ...     {'destination': 'DAG456...', 'amount': 2000000}
+            ... ]
+            >>> result = Transactions.simulate_batch_transfer(
+            ...     'DAG789...', transfers, network
+            ... )
+            >>> if result['batch_success_probability'] > 0.8:
+            ...     batch = Transactions.create_batch_transfer(...)
+        """
+        # Import here to avoid circular imports
+        from .simulation import TransactionSimulator
+        
+        simulator = TransactionSimulator(network)
+        return simulator.simulate_batch_transfers(
+            source, transfers, check_balance, detailed_analysis
+        )
+
 
 # Convenience functions for backward compatibility
 def create_dag_transaction(
