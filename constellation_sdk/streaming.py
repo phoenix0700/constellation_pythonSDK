@@ -14,7 +14,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 
 try:
@@ -68,7 +68,7 @@ class EventFilter:
     addresses: Optional[Set[str]] = None
     transaction_types: Optional[Set[str]] = None
     metagraph_ids: Optional[Set[str]] = None
-    amount_range: Optional[tuple] = None
+    amount_range: Optional[Tuple] = None
     custom_filter: Optional[Callable] = None
 
     def matches(self, event: StreamEvent) -> bool:
@@ -686,7 +686,7 @@ async def stream_transactions(
 
 async def stream_balance_changes(
     network: str = "testnet", addresses: List[str] = None, callback: Callable = None
-) -> tuple[NetworkEventStream, BalanceTracker]:
+) -> Tuple[NetworkEventStream, BalanceTracker]:
     """
     Quick setup for streaming balance changes.
 
