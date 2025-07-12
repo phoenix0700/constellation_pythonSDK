@@ -263,6 +263,7 @@ class TestNetworkEventStream:
         assert "uptime" in stats
 
     @patch("constellation_sdk.streaming.websockets")
+    @pytest.mark.asyncio
     async def test_websocket_connection_success(self, mock_websockets):
         """Test successful WebSocket connection."""
         mock_websocket = AsyncMock()
@@ -282,6 +283,7 @@ class TestNetworkEventStream:
             await self.stream.disconnect()
 
     @patch("constellation_sdk.streaming.websockets")
+    @pytest.mark.asyncio
     async def test_websocket_connection_failure(self, mock_websockets):
         """Test WebSocket connection failure with fallback to polling."""
         mock_websockets.connect.side_effect = Exception("Connection failed")
@@ -296,6 +298,7 @@ class TestNetworkEventStream:
             assert self.stream._connected
             mock_start_polling.assert_called_once()
 
+    @pytest.mark.asyncio
     async def test_event_emission(self):
         """Test event emission to handlers."""
         events_received = []
@@ -319,6 +322,7 @@ class TestNetworkEventStream:
         assert len(events_received) == 1
         assert events_received[0] == test_event
 
+    @pytest.mark.asyncio
     async def test_event_filtering(self):
         """Test event filtering."""
         events_received = []
@@ -354,6 +358,7 @@ class TestNetworkEventStream:
         assert len(events_received) == 1
         assert events_received[0] == matching_event
 
+    @pytest.mark.asyncio
     async def test_async_event_handler(self):
         """Test async event handler."""
         events_received = []
@@ -425,6 +430,7 @@ class TestBalanceTracker:
         assert self.valid_address1 not in self.tracker.tracked_addresses
         assert self.valid_address1 not in self.tracker.last_balances
 
+    @pytest.mark.asyncio
     async def test_balance_change_detection(self):
         """Test balance change detection."""
         # Track an address
@@ -446,6 +452,7 @@ class TestBalanceTracker:
         # Verify balance was updated
         assert self.tracker.last_balances[self.valid_address1] == 2000000000
 
+    @pytest.mark.asyncio
     async def test_balance_tracker_lifecycle(self):
         """Test starting and stopping balance tracker."""
         # Mock event stream
