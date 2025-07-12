@@ -207,6 +207,7 @@ class TestAsyncNetwork:
         assert not network._is_cache_valid(cache_key)
 
     @patch("constellation_sdk.async_network.AsyncHTTPClient.request")
+    @pytest.mark.asyncio
     async def test_get_node_info(self, mock_request):
         """Test get node info method."""
         mock_request.return_value = {"id": "test_node", "state": "ready"}
@@ -232,6 +233,7 @@ class TestAsyncNetwork:
             assert mock_request.call_count == 1
 
     @patch("constellation_sdk.async_network.AsyncHTTPClient.request")
+    @pytest.mark.asyncio
     async def test_get_balance(self, mock_request):
         """Test get balance method."""
         mock_request.return_value = {"balance": "1000000", "address": "DAG123..."}
@@ -253,6 +255,7 @@ class TestAsyncNetwork:
             mock_request.assert_called_once()
 
     @patch("constellation_sdk.async_network.AsyncHTTPClient.request")
+    @pytest.mark.asyncio
     async def test_batch_get_balances(self, mock_request):
         """Test batch balance retrieval."""
 
@@ -284,6 +287,7 @@ class TestAsyncNetwork:
             assert mock_request.call_count == 2
 
     @patch("constellation_sdk.async_network.AsyncHTTPClient.request")
+    @pytest.mark.asyncio
     async def test_health_check(self, mock_request):
         """Test health check method."""
         mock_request.return_value = {"status": "healthy"}
@@ -303,6 +307,7 @@ class TestAsyncNetwork:
             mock_request.assert_called_once()
 
     @patch("constellation_sdk.async_network.AsyncHTTPClient.request")
+    @pytest.mark.asyncio
     async def test_health_check_failure(self, mock_request):
         """Test health check failure handling."""
         mock_request.side_effect = NetworkError("Connection failed")
@@ -320,6 +325,7 @@ class TestAsyncNetwork:
 
             assert result is False
 
+    @pytest.mark.asyncio
     async def test_cache_operations(self):
         """Test cache operations."""
         network_config = NetworkConfig(

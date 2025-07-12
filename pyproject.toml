@@ -25,4 +25,40 @@ extend-exclude = '''
   | build
   | dist
 )/
-''' 
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--tb=short", 
+    "--strict-markers",
+    "--disable-warnings",
+    "--color=yes",
+    "--durations=10",
+    "--asyncio-mode=auto"
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_default_test_loop_scope = "function"
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests with external services", 
+    "network: Tests requiring network connectivity",
+    "slow: Tests that take longer to run",
+    "mock: Tests using mock objects",
+    "batch: Tests for batch operations functionality",
+    "simulation: Tests for transaction simulation functionality", 
+    "streaming: Tests for real-time streaming functionality",
+    "graphql: Tests for GraphQL API functionality",
+    "asyncio: Async tests"
+]
+minversion = "6.0"
+timeout = 300
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+] 
