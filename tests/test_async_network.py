@@ -256,6 +256,63 @@ class TestAsyncNetwork:
 
     @patch("constellation_sdk.async_network.AsyncHTTPClient.request")
     @pytest.mark.asyncio
+    async def test_get_transaction_info(self, mock_request):
+        """Test get transaction info method."""
+        tx_hash = "tx_hash_abc"
+        mock_request.return_value = {"hash": tx_hash, "amount": 100}
+
+        network_config = NetworkConfig(
+            network_version="2.0",
+            be_url="https://example.com",
+            l0_url="https://l0.example.com",
+            l1_url="https://l1.example.com",
+            name="Test",
+        )
+
+        async with AsyncNetwork(network_config) as network:
+            result = await network.get_transaction_info(tx_hash)
+            assert result["hash"] == tx_hash
+            mock_request.assert_called_once()
+
+    @patch("constellation_sdk.async_network.AsyncNetwork.get_transaction_info")
+    @pytest.mark.asyncio
+    async def test_get_transaction_success(self, mock_get_info):
+        """Test successful get_transaction wrapper."""
+        tx_hash = "tx_hash_123"
+        mock_get_info.return_value = {"hash": tx_hash, "status": "confirmed"}
+
+        network_config = NetworkConfig(
+            network_version="2.0",
+            be_url="https://example.com",
+            l0_url="https://l0.example.com",
+            l1_url="https://l1.example.com",
+            name="Test",
+        )
+        async with AsyncNetwork(network_config) as network:
+            result = await network.get_transaction(tx_hash)
+            mock_get_info.assert_called_once_with(tx_hash)
+            assert result is not None
+            assert result["hash"] == tx_hash
+
+    @patch("constellation_sdk.async_network.AsyncNetwork.get_transaction_info")
+    @pytest.mark.asyncio
+    async def test_get_transaction_not_found(self, mock_get_info):
+        """Test get_transaction wrapper when transaction not found."""
+        mock_get_info.side_effect = HTTPError("Not Found", status_code=404)
+
+        network_config = NetworkConfig(
+            network_version="2.0",
+            be_url="https://example.com",
+            l0_url="https://l0.example.com",
+            l1_url="https://l1.example.com",
+            name="Test",
+        )
+        async with AsyncNetwork(network_config) as network:
+            result = await network.get_transaction("not_found_hash")
+            assert result is None
+
+    @patch("constellation_sdk.async_network.AsyncHTTPClient.request")
+    @pytest.mark.asyncio
     async def test_batch_get_balances(self, mock_request):
         """Test batch balance retrieval."""
 

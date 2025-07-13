@@ -192,6 +192,66 @@ class AsyncMetagraphClient:
         except Exception as e:
             raise MetagraphError(f"Failed to submit data transaction: {e}") from e
 
+    async def submit_transaction(self, signed_transaction: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Submit a signed transaction to the network asynchronously.
+        Args:
+            signed_transaction: Signed transaction from Transactions class
+        Returns:
+            Transaction submission result
+        """
+        try:
+            return await self.network.submit_transaction(signed_transaction)
+        except NetworkError as e:
+            raise MetagraphError(f"Transaction submission failed: {e}") from e
+
+    async def get_transaction_status(self, transaction_hash: str) -> str:
+        """
+        Get the status of a transaction asynchronously.
+        Args:
+            transaction_hash: The hash of the transaction to check.
+        Returns:
+            The transaction status ('pending', 'confirmed', 'failed', or 'not_found')
+        """
+        try:
+            tx = await self.network.get_transaction(transaction_hash)
+            if tx is None:
+                return "not_found"
+            if tx.get("blockHash"):
+                return "confirmed"
+            else:
+                return "pending"
+        except NetworkError as e:
+            raise MetagraphError(f"Failed to get transaction status: {e}")
+
+    async def wait_for_confirmation(
+        self, transaction_hash: str, timeout: int = 120, poll_interval: int = 5
+    ) -> Dict[str, Any]:
+        """
+        Wait for a transaction to be confirmed asynchronously.
+        Args:
+            transaction_hash: The hash of the transaction to wait for.
+            timeout: The maximum time to wait in seconds.
+            poll_interval: The time to wait between polling for status.
+        Returns:
+            The confirmed transaction data.
+        Raises:
+            MetagraphError: If the transaction is not confirmed within the timeout.
+        """
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                tx = await self.network.get_transaction(transaction_hash)
+                if tx and tx.get("blockHash"):
+                    return tx
+            except NetworkError:
+                pass  # Ignore network errors and retry
+            await asyncio.sleep(poll_interval)
+
+        raise MetagraphError(
+            f"Transaction {transaction_hash} not confirmed after {timeout} seconds."
+        )
+
     async def get_latest_snapshot(self) -> Dict[str, Any]:
         """
         Get latest snapshot for this metagraph asynchronously.
@@ -241,6 +301,29 @@ class AsyncMetagraphClient:
             )
         except Exception as e:
             raise MetagraphError(f"Failed to get data: {e}") from e
+
+    async def get_custom_state(self, state_key: str) -> Optional[Any]:
+        """
+        Query a custom state value from the metagraph by key (async).
+        NOTE: Assumes a generic state endpoint exists.
+        Args:
+            state_key: The key of the state variable to query.
+        Returns:
+            The value of the state variable, or None if not found.
+        """
+        if state_key is None:
+            raise ConstellationError("State key cannot be None")
+
+        url = self._get_metagraph_url(f"/state/{state_key}")
+
+        try:
+            response = await self.network.http_client.request("GET", url, self.config)
+            return response.get("data")
+        except NetworkError as e:
+            # Assuming 404 means the key is not found
+            if hasattr(e, "status_code") and e.status_code == 404:
+                return None
+            raise MetagraphError(f"Failed to query custom state: {e}") from e
 
     async def batch_get_balances(
         self, addresses: List[str]

@@ -154,6 +154,26 @@ class Network:
         else:
             raise NetworkError(f"Transaction submission failed: {response.status_code}")
 
+    def get_transaction(self, tx_hash: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific transaction by its hash.
+
+        Args:
+            tx_hash: Transaction hash
+
+        Returns:
+            Transaction data or None if not found
+        """
+        url = f"{self.config.be_url}/transactions/{tx_hash}"
+        response = self._make_request(url)
+
+        if response.status_code == 200:
+            return response.json()["data"]
+        elif response.status_code == 404:
+            return None
+        else:
+            raise NetworkError(f"Transaction query failed: {response.status_code}")
+
     def validate_address(self, address: str) -> bool:
         """Validate DAG address format."""
         return (

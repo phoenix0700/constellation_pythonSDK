@@ -8,6 +8,7 @@ import pytest
 
 from constellation_sdk import ConstellationError
 from constellation_sdk.metagraph import MetagraphClient
+import time
 
 
 @pytest.mark.integration
@@ -19,7 +20,7 @@ class TestMetagraphClientInitialization:
         """Test creating client for mainnet."""
         client = MetagraphClient("mainnet")
 
-        assert client.network == "mainnet"
+        assert client.network_name == "mainnet"
         assert (
             "mainnet" in client.base_url.lower()
             or "constellation.io" in client.base_url
@@ -29,7 +30,7 @@ class TestMetagraphClientInitialization:
         """Test creating client for testnet."""
         client = MetagraphClient("testnet")
 
-        assert client.network == "testnet"
+        assert client.network_name == "testnet"
         assert "testnet" in client.base_url.lower()
 
     def test_client_creation_invalid_network(self):
@@ -565,6 +566,108 @@ class TestMetagraphEdgeCases:
 
         with pytest.raises(ConstellationError):
             client.query_data(None)
+
+
+@pytest.mark.integration
+@pytest.mark.mock
+class TestMetagraphSubmissions:
+    """Tests for new submission and status features."""
+
+    @pytest.fixture
+    def client(self):
+        """Fixture for a MetagraphClient with a mocked network object."""
+        with patch("constellation_sdk.metagraph.Network") as MockNetwork:
+            client = MetagraphClient("testnet")
+            client.network = MockNetwork()
+            return client
+
+    def test_submit_transaction_success(self, client):
+        """Test successful transaction submission."""
+        signed_tx = {"value": "some_tx_data", "proofs": []}
+        expected_hash = {"hash": "tx_hash_abc"}
+        client.network.submit_transaction.return_value = expected_hash
+
+        result = client.submit_transaction(signed_tx)
+
+        client.network.submit_transaction.assert_called_once_with(signed_tx)
+        assert result == expected_hash
+
+    def test_get_transaction_status_confirmed(self, client):
+        """Test confirmed transaction status."""
+        tx_hash = "confirmed_hash"
+        client.network.get_transaction.return_value = {"blockHash": "some_block_hash"}
+
+        status = client.get_transaction_status(tx_hash)
+
+        client.network.get_transaction.assert_called_once_with(tx_hash)
+        assert status == "confirmed"
+
+    def test_get_transaction_status_pending(self, client):
+        """Test pending transaction status."""
+        tx_hash = "pending_hash"
+        client.network.get_transaction.return_value = {"blockHash": None}
+
+        status = client.get_transaction_status(tx_hash)
+        assert status == "pending"
+
+    def test_get_transaction_status_not_found(self, client):
+        """Test not_found transaction status."""
+        tx_hash = "not_found_hash"
+        client.network.get_transaction.return_value = None
+
+        status = client.get_transaction_status(tx_hash)
+        assert status == "not_found"
+
+    @patch("time.sleep", return_value=None)
+    def test_wait_for_confirmation_success(self, mock_sleep, client):
+        """Test successful wait for transaction confirmation."""
+        tx_hash = "wait_success_hash"
+        pending_tx = {"blockHash": None}
+        confirmed_tx = {"blockHash": "block_hash_xyz"}
+
+        # Simulate transaction being pending then confirmed
+        client.network.get_transaction.side_effect = [pending_tx, confirmed_tx]
+
+        result = client.wait_for_confirmation(tx_hash, poll_interval=0)
+
+        assert client.network.get_transaction.call_count == 2
+        assert result == confirmed_tx
+
+    @patch("time.sleep", return_value=None)
+    def test_wait_for_confirmation_timeout(self, mock_sleep, client):
+        """Test timeout during wait for confirmation."""
+        tx_hash = "wait_timeout_hash"
+        client.network.get_transaction.return_value = {"blockHash": None}
+
+        with pytest.raises(ConstellationError, match="not confirmed after"):
+            client.wait_for_confirmation(tx_hash, timeout=0.1, poll_interval=0.05)
+
+    @patch("requests.get")
+    def test_get_custom_state_success(self, mock_get):
+        """Test successful custom state retrieval."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"data": {"my_key": "my_value"}}
+        mock_get.return_value = mock_response
+
+        client = MetagraphClient("testnet")
+        state = client.get_custom_state("metagraph123", "my_key")
+
+        assert state == {"my_key": "my_value"}
+        mock_get.assert_called_once()
+        assert "state/my_key" in mock_get.call_args[0][0]
+
+    @patch("requests.get")
+    def test_get_custom_state_not_found(self, mock_get):
+        """Test custom state retrieval when key not found."""
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_get.return_value = mock_response
+
+        client = MetagraphClient("testnet")
+        state = client.get_custom_state("metagraph123", "not_found_key")
+
+        assert state is None
 
 
 if __name__ == "__main__":

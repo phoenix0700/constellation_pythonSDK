@@ -112,8 +112,9 @@ class NetworkError(ConstellationError):
     Used for HTTP errors, connection issues, timeouts, etc.
     """
 
-    def __init__(self, message, status_code=None, response_data=None):
-        super().__init__(message, error_code="NETWORK_ERROR")
+    def __init__(self, message, status_code=None, response_data=None, **kwargs):
+        super().__init__(message, **kwargs)
+        self.error_code = kwargs.get("error_code", "NETWORK_ERROR")
         self.status_code = status_code
         self.response_data = response_data
         self.details.update(
@@ -143,13 +144,14 @@ class HTTPError(NetworkError):
     """Raised when HTTP request returns an error status code."""
 
     def __init__(self, message, status_code, url=None, response_data=None):
-        super().__init__(message, error_code="HTTP_ERROR")
-        self.status_code = status_code
-        self.url = url
-        self.response_data = response_data
-        self.details.update(
-            {"status_code": status_code, "url": url, "response_data": response_data}
+        super().__init__(
+            message,
+            status_code=status_code,
+            response_data=response_data,
+            error_code="HTTP_ERROR",
         )
+        self.url = url
+        self.details.update({"url": url})
 
 
 class APIError(NetworkError):

@@ -399,6 +399,25 @@ class AsyncNetwork:
                 f"Failed to get transaction info for {tx_hash}: {e}"
             ) from e
 
+    async def get_transaction(self, tx_hash: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific transaction by its hash. Async version.
+
+        Args:
+            tx_hash: Transaction hash
+
+        Returns:
+            Transaction data or None if not found
+        """
+        try:
+            # Re-use get_transaction_info and adapt the output
+            tx_info = await self.get_transaction_info(tx_hash)
+            return tx_info
+        except HTTPError as e:
+            if e.status_code == 404:
+                return None
+            raise
+
     async def submit_transaction(
         self, transaction_data: Dict[str, Any]
     ) -> Dict[str, Any]:

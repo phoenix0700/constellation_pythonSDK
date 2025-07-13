@@ -216,6 +216,52 @@ class TestTransactionOperations:
         # Validate response
         assert result["hash"] == "tx_hash_123"
 
+    @patch("constellation_sdk.network.requests.request")
+    def test_get_transaction_success(
+        self, mock_request, test_network_config, mock_network_responses
+    ):
+        """Test successful single transaction retrieval."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "data": mock_network_responses["transaction_data"]
+        }
+        mock_request.return_value = mock_response
+
+        network = Network(test_network_config)
+        tx_hash = "tx_hash_123"
+        transaction = network.get_transaction(tx_hash)
+
+        mock_request.assert_called_with(
+            "GET", f"{test_network_config.be_url}/transactions/{tx_hash}", timeout=30
+        )
+        assert transaction is not None
+        assert transaction["hash"] == tx_hash
+
+    @patch("constellation_sdk.network.requests.request")
+    def test_get_transaction_not_found(self, mock_request, test_network_config):
+        """Test single transaction retrieval for non-existent hash."""
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_request.return_value = mock_response
+
+        network = Network(test_network_config)
+        transaction = network.get_transaction("non_existent_hash")
+
+        assert transaction is None
+
+    @patch("constellation_sdk.network.requests.request")
+    def test_get_transaction_server_error(self, mock_request, test_network_config):
+        """Test single transaction retrieval with server error."""
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_request.return_value = mock_response
+
+        network = Network(test_network_config)
+
+        with pytest.raises(ConstellationError):
+            network.get_transaction("any_hash")
+
 
 @pytest.mark.integration
 @pytest.mark.mock

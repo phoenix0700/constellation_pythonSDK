@@ -91,6 +91,15 @@ def mock_network_responses():
                 },
             ]
         },
+        "transaction_data": {
+            "hash": "tx_hash_123",
+            "source": "DAG123test",
+            "destination": "DAG456test",
+            "amount": 50000000,
+            "fee": 0,
+            "blockHash": "block_hash_abc",
+            "timestamp": "2024-01-15T10:30:00Z",
+        },
     }
 
 

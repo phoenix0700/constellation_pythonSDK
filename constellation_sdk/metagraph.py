@@ -15,7 +15,7 @@ import requests
 
 from .config import NetworkConfig
 from .exceptions import ConstellationError
-from .network import NetworkError
+from .network import Network, NetworkError
 
 # GraphQL integration (optional)
 try:
@@ -91,8 +91,11 @@ class MetagraphClient:
                 f"Invalid network '{network}'. Must be one of: {valid_networks}"
             )
 
-        self.network = network
+        self.network_name = network
         self.base_url = f"https://be-{network}.constellationnetwork.io"
+
+        # Underlying network client for submissions
+        self.network = Network(network)
 
         # Initialize GraphQL client if available
         if GRAPHQL_AVAILABLE:
@@ -123,7 +126,7 @@ class MetagraphClient:
         """
         if include_test_deployments is None:
             # Default: exclude test deployments on mainnet, include on test networks
-            include_test_deployments = self.network != "mainnet"
+            include_test_deployments = self.network_name != "mainnet"
 
         try:
             currency_url = f"{self.base_url}/currency"
@@ -148,7 +151,7 @@ class MetagraphClient:
 
                 metagraph = {
                     "id": currency["id"],
-                    "network": self.network,
+                    "network": self.network_name,
                     "created": currency.get("timestamp"),
                     "balance": None,
                     "transaction_count": None,
@@ -195,7 +198,7 @@ class MetagraphClient:
             Category string
         """
         # On mainnet, assume production unless proven otherwise
-        if self.network == "mainnet":
+        if self.network_name == "mainnet":
             return "production"
 
         # On test networks, categorize based on patterns we discovered
@@ -203,7 +206,7 @@ class MetagraphClient:
 
         # Check if it was created in a batch (indicating automated deployment)
         # This is a simplified heuristic - could be enhanced with more data
-        if self.network in ["testnet", "integrationnet"]:
+        if self.network_name in ["testnet", "integrationnet"]:
             return "test"  # Most are test deployments based on our analysis
 
         return "unknown"
@@ -244,7 +247,7 @@ class MetagraphClient:
 
             return {
                 "id": metagraph_id,
-                "network": self.network,
+                "network": self.network_name,
                 "balance": balance,
                 "transaction_count": transaction_count,
                 "balance_url": balance_url,
@@ -444,12 +447,110 @@ class MetagraphClient:
         except Exception as e:
             raise MetagraphError(f"Error querying data: {e}")
 
+    def get_custom_state(self, metagraph_id: str, state_key: str) -> Optional[Any]:
+        """
+        Query a custom state value from a metagraph by key.
+        NOTE: This assumes a generic state endpoint exists, which may vary
+              per metagraph implementation.
+        Args:
+            metagraph_id: The metagraph ID.
+            state_key: The key of the state variable to query.
+        Returns:
+            The value of the state variable, or None if not found.
+        """
+        if metagraph_id is None or state_key is None:
+            raise ConstellationError("Metagraph ID and state key cannot be None")
+
+        try:
+            # Assuming an endpoint structure like this.
+            state_url = f"{self.base_url}/metagraphs/{metagraph_id}/state/{state_key}"
+            response = requests.get(state_url, timeout=5)
+
+            if response.status_code == 200:
+                return response.json().get("data")
+            elif response.status_code == 404:
+                return None
+            else:
+                raise MetagraphError(f"Failed to query custom state: {response.status_code}")
+        except Exception as e:
+            raise MetagraphError(f"Error querying custom state: {e}")
+
     def __str__(self) -> str:
         """String representation of the MetagraphClient."""
-        return f"MetagraphClient(network='{self.network}', base_url='{self.base_url}')"
+        return f"MetagraphClient(network='{self.network_name}', base_url='{self.base_url}')"
 
     # Transaction creation methods moved to transactions.py module
     # Use Transactions.create_token_transfer() and Transactions.create_data_submission() instead
+    def submit_transaction(self, signed_transaction: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Submit a signed transaction to the network.
+        This is the missing piece to complete the transaction lifecycle.
+        Args:
+            signed_transaction: Signed transaction from Transactions class
+        Returns:
+            Transaction submission result (usually the transaction hash)
+        Example:
+            >>> signed_tx = Transactions.create_token_transfer(...)
+            >>> result = client.submit_transaction(signed_tx)
+            >>> print(f"Transaction submitted with hash: {result['hash']}")
+        """
+        try:
+            return self.network.submit_transaction(signed_transaction)
+        except NetworkError as e:
+            raise MetagraphError(f"Transaction submission failed: {e}") from e
+
+    def get_transaction_status(self, transaction_hash: str) -> str:
+        """
+        Get the status of a transaction.
+        Args:
+            transaction_hash: The hash of the transaction to check.
+        Returns:
+            The transaction status ('pending', 'confirmed', 'failed', or 'not_found')
+        """
+        try:
+            tx = self.network.get_transaction(transaction_hash)
+            if tx is None:
+                return "not_found"
+
+            # This is a simplified check. The actual field might be different.
+            # Assuming 'blockHash' indicates confirmation.
+            if tx.get("blockHash"):
+                return "confirmed"
+            else:
+                return "pending"
+        except NetworkError as e:
+            raise MetagraphError(f"Failed to get transaction status: {e}")
+
+    def wait_for_confirmation(
+        self, transaction_hash: str, timeout: int = 120, poll_interval: int = 5
+    ) -> Dict[str, Any]:
+        """
+        Wait for a transaction to be confirmed.
+        Args:
+            transaction_hash: The hash of the transaction to wait for.
+            timeout: The maximum time to wait in seconds.
+            poll_interval: The time to wait between polling for status.
+        Returns:
+            The confirmed transaction data.
+        Raises:
+            MetagraphError: If the transaction is not confirmed within the timeout.
+        """
+        import time
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                tx = self.network.get_transaction(transaction_hash)
+                if tx and tx.get("blockHash"):
+                    return tx
+            except NetworkError:
+                # Ignore network errors during polling, we'll retry
+                pass
+            time.sleep(poll_interval)
+
+        raise MetagraphError(
+            f"Transaction {transaction_hash} not confirmed after {timeout} seconds."
+        )
 
     def get_network_summary(self) -> Dict[str, Any]:
         """
@@ -468,7 +569,7 @@ class MetagraphClient:
             production_only = self.discover_production_metagraphs()
 
             return {
-                "network": self.network,
+                "network": self.network_name,
                 "total_deployments": len(all_deployments),
                 "production_count": len(production_only),
                 "test_deployments": len(all_deployments) - len(production_only),
@@ -476,7 +577,7 @@ class MetagraphClient:
                     "mainnet": "Focus here for production metagraphs (~7 real)",
                     "testnet": "Mostly automated node testing (~34 nodes, 37 deployments)",
                     "integrationnet": "Development environment (~84 deployments)",
-                }.get(self.network, "Mixed production and test deployments"),
+                }.get(self.network_name, "Mixed production and test deployments"),
             }
         except Exception as e:
             raise MetagraphError(f"Error getting network summary: {e}")

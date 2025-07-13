@@ -231,7 +231,6 @@ integrationnet = Network('integrationnet')  # Testing network
 # Check network status
 print(f"TestNet Version: {testnet.get_node_info()['version']}")
 print(f"Active Nodes: {len(testnet.get_cluster_info())}")
-```
 
 ### 3. Check Balances
 
@@ -484,6 +483,10 @@ cluster = network.get_cluster_info()
 print(f"Total Nodes: {len(cluster)}")
 ready_nodes = [n for n in cluster if n.get('state') == 'Ready']
 print(f"Ready Nodes: {len(ready_nodes)}")
+
+# Get all token holders from the latest snapshot
+holders = network.get_snapshot_holders()
+print(f"Total Holders: {len(holders)}")
 ```
 
 ### 💰 Balance and Address Operations
@@ -1066,11 +1069,10 @@ constellation send 1.0 DAG456... --dry-run      # Test transaction without sendi
 # Network Information
 constellation network info                       # Get network status
 constellation network health                     # Check network health
+constellation network holders                    # Get top token holders from the latest snapshot
 
 # Metagraph Operations
 constellation metagraph discover                 # Find all metagraphs
-constellation metagraph discover --production    # Production metagraphs only
-constellation metagraph discover --async         # Faster async discovery
 
 # Transaction Simulation (New!)
 constellation simulate dag <source> <dest> <amount>              # Simulate DAG transfer
