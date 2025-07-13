@@ -33,8 +33,8 @@ class AddressValidator:
     including format validation and checksum verification.
     """
 
-    # DAG address format: DAG + exactly 35 hex characters
-    DAG_ADDRESS_PATTERN = re.compile(r"^DAG[0-9A-Fa-f]{35}$")
+    # DAG address format: DAG + 35-37 hex characters (to support both old and new formats)
+    DAG_ADDRESS_PATTERN = re.compile(r"^DAG[0-9A-Fa-f]{35,37}$")
 
     @classmethod
     def validate_format(cls, address: str) -> bool:
@@ -99,9 +99,9 @@ class AddressValidator:
         if not address.startswith("DAG"):
             raise AddressValidationError(address, "Address must start with 'DAG'")
 
-        if len(address) != 38:
+        if len(address) not in [38, 40]:
             raise AddressValidationError(
-                address, f"Address must be exactly 38 characters, got {len(address)}"
+                address, f"Address must be 38 or 40 characters, got {len(address)}"
             )
 
         if not cls.validate_format(address):
