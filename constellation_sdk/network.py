@@ -447,3 +447,45 @@ class Network:
             "success": response.success_rate() == 100,
             "execution_time": response.execution_time,
         }
+
+    def get_snapshot_holders(self) -> List[Dict[str, Any]]:
+        """
+        Get a list of all wallet balances from the latest global snapshot.
+
+        This method fetches the latest combined snapshot from the Global L0 API,
+        extracts the wallet balances, and returns a list of all holders with
+        their respective balances in DAG.
+
+        Returns:
+            A list of dictionaries, each containing 'wallet' and 'amount'.
+            Returns an empty list if the snapshot format is unexpected.
+
+        Example:
+            >>> # Get all holders from the latest snapshot
+            >>> holders = network.get_snapshot_holders()
+        """
+        url_to_fetch = "http://l0-lb-mainnet.constellationnetwork.io/global-snapshots/latest/combined"
+
+        response = self._make_request(
+            url_to_fetch, headers={"Accept": "application/json"}
+        )
+
+        if response.status_code != 200:
+            raise NetworkError(
+                f"Failed to fetch snapshot from {url_to_fetch}: {response.status_code}"
+            )
+
+        try:
+            json_data = response.json()
+            balances = json_data[1]["balances"]
+        except (KeyError, IndexError, TypeError):
+            # Handle cases where the snapshot format is not as expected
+            return []
+
+        holders = []
+        for wallet, amount in balances.items():
+            if wallet == "0000000000000000000000000000000000000000":
+                continue
+            holders.append({"wallet": wallet, "amount": amount / 1e8})
+
+        return holders

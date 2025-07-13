@@ -464,6 +464,9 @@ def network_info(ctx):
     except Exception as e:
         click.echo(f"❌ Could not retrieve network info: {e}", err=True)
 
+    if ctx.obj["verbose"]:
+        click.echo(format_output(output, ctx.obj["output_format"]))
+
 
 @network.command("health")
 @click.pass_context
@@ -490,6 +493,52 @@ def network_health(ctx):
 
     if ctx.obj["verbose"]:
         click.echo(format_output(output, ctx.obj["output_format"]))
+
+
+@network.command("holders")
+@click.option(
+    "--limit", "-l", type=int, default=10, help="Number of holders to display."
+)
+@click.option(
+    "--sort-by", type=click.Choice(["amount"]), default="amount", help="Sort key."
+)
+@click.pass_context
+@handle_errors
+def network_holders(ctx, limit, sort_by):
+    """Get a list of all token holders from the latest global snapshot."""
+    net = Network(ctx.obj["network"])
+
+    click.echo("ℹ️  Fetching latest snapshot holders (this may take a moment)...")
+
+    holders = net.get_snapshot_holders()
+
+    if not holders:
+        click.echo("❌ No holders found or snapshot data is unavailable.")
+        return
+
+    # Sort the holders
+    sorted_holders = sorted(holders, key=lambda x: x[sort_by], reverse=True)
+
+    # Limit the output
+    limited_holders = sorted_holders[:limit]
+
+    output = {
+        "total_holders": len(holders),
+        "displaying": len(limited_holders),
+        "top_holders": limited_holders,
+    }
+
+    if ctx.obj["output_format"] == "json":
+        click.echo(format_output(output, "json"))
+    else:
+        click.echo(
+            f"\n✅ Found {len(holders)} total holders. Showing top {len(limited_holders)} by {sort_by}:"
+        )
+        click.echo(f"{'Rank':<5} {'Wallet':<45} {'Amount (DAG)':>20}")
+        click.echo(f"{'-'*5} {'-'*45} {'-'*20}")
+        for i, holder in enumerate(limited_holders):
+            amount_str = f"{holder['amount']:,.2f}"
+            click.echo(f"{i+1:<5} {holder['wallet']:<45} {amount_str:>20}")
 
 
 # Metagraph Commands
@@ -1195,7 +1244,7 @@ def stream_events_cmd(ctx, event_types, addresses, duration, output_file):
                 event_data = event.to_dict()
                 output = json.dumps(event_data, indent=2)
             else:
-                output = f"[{timestamp}] 🎯 {event.event_type.value.upper()} Event"
+                output = f"[{timestamp}] �� {event.event_type.value.upper()} Event"
                 output += f"\n  Network: {event.network}"
                 output += f"\n  Source: {event.source}"
                 output += f"\n  Data: {json.dumps(event.data, indent=2)}"

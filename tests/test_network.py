@@ -215,3 +215,74 @@ class TestTransactionOperations:
 
         # Validate response
         assert result["hash"] == "tx_hash_123"
+
+
+@pytest.mark.integration
+@pytest.mark.mock
+class TestSnapshotOperations:
+    """Test snapshot retrieval operations."""
+
+    @patch("constellation_sdk.network.requests.request")
+    def test_get_snapshot_holders_success(self, mock_request, test_network_config):
+        """Test successful snapshot holders retrieval."""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_snapshot_data = [
+            {},
+            {
+                "balances": {
+                    "DAGWALLET1": 1000000000,
+                    "DAGWALLET2": 2000000000,
+                    "0000000000000000000000000000000000000000": 123,
+                }
+            },
+        ]
+        mock_response.json.return_value = mock_snapshot_data
+        mock_request.return_value = mock_response
+
+        network = Network(test_network_config)
+        holders = network.get_snapshot_holders()
+
+        # Validate request
+        mock_request.assert_called_once()
+        assert "global-snapshots/latest/combined" in str(mock_request.call_args)
+
+        # Validate response
+        assert len(holders) == 2
+        assert {"wallet": "DAGWALLET1", "amount": 10.0} in holders
+        assert {"wallet": "DAGWALLET2", "amount": 20.0} in holders
+        # Check that the zero address is filtered out
+        assert not any(
+            h["wallet"] == "0000000000000000000000000000000000000000" for h in holders
+        )
+
+    @patch("constellation_sdk.network.requests.request")
+    def test_get_snapshot_holders_http_error(self, mock_request, test_network_config):
+        """Test snapshot holders retrieval with HTTP error."""
+        # Setup mock error response
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_request.return_value = mock_response
+
+        network = Network(test_network_config)
+
+        with pytest.raises(ConstellationError):
+            network.get_snapshot_holders()
+
+    @patch("constellation_sdk.network.requests.request")
+    def test_get_snapshot_holders_malformed_json(
+        self, mock_request, test_network_config
+    ):
+        """Test snapshot holders retrieval with malformed JSON."""
+        # Setup mock response with invalid structure
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"data": "invalid_structure"}
+        mock_request.return_value = mock_response
+
+        network = Network(test_network_config)
+        holders = network.get_snapshot_holders()
+
+        # Should return an empty list for malformed data
+        assert holders == []
